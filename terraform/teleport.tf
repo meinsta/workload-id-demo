@@ -74,7 +74,7 @@ resource "teleport_provision_token" "workload_id_demo_web_bot_token" {
 resource "teleport_provision_token" "workload_id_demo_backend_1_bot_token" {
   version = "v2"
   metadata = {
-    name        = "workload-id-demo-backend-bot"
+    name        = "workload-id-demo-backend-1-bot"
     description = "Token for Workload ID Demo backend Bot"
   }
 
