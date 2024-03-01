@@ -1,0 +1,5 @@
+prereqs
+.terraform.lock.hcl
+.terraform
+vars.tf
+main.tf
