@@ -3,7 +3,7 @@ data "aws_ami" "ubuntu" {
 
   filter {
     name   = "name"
-    values = ["ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-arm64-server-*"]
+    values = ["ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-arm64-server-20240228"]
   }
 
   filter {
@@ -170,7 +170,7 @@ resource "cloudinit_config" "workload_id_demo_backend_1_cloud_init" {
 
     content = templatefile("${path.module}/create_tbot_config.sh.tftpl", {
       teleport_addr = var.teleport_addr,
-      token_name = teleport_provision_token.workload_id_demo_web_bot_token.metadata.name,
+      token_name = teleport_provision_token.workload_id_demo_backend_1_bot_token.metadata.name,
       workload_name = "demo-backend-1"
     })
   }
