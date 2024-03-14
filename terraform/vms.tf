@@ -14,6 +14,10 @@ data "aws_ami" "ubuntu" {
   owners = ["099720109477"] # Canonical
 }
 
+data "aws_key_pair" "dave" {
+  key_name = "dave-sudia"
+}
+
 # role and policy
 resource "aws_iam_role" "workload_id_demo_nodes_role" {
   name = "WorkloadIdDemoNodes"
@@ -51,15 +55,6 @@ resource "aws_iam_role_policy" "workload_id_demo_nodes_policy" {
         ]
         Effect   = "Allow"
         Resource = "*"
-      },
-      {
-        Action = [
-          "s3:ListBucket",
-          "s3:GetObject"
-        ]
-        Sid = ""
-        Effect = "Allow"
-        Resource = "arn:aws:s3:::${aws_s3_bucket.workload_id_demo_binaries_bucket.bucket}/*"
       }
     ]
   })
@@ -85,18 +80,9 @@ resource "aws_security_group" "workload_id_demo_nodes_sg" {
   }
 
   ingress {
-    description      = "SSH from anywhere"
+    description      = "AWS EC2 Connect from anywhere"
     from_port        = 22
     to_port          = 22
-    protocol         = "tcp"
-    cidr_blocks      = ["0.0.0.0/0"]
-    ipv6_cidr_blocks = ["::/0"]
-  }
-
-  ingress {
-    description      = "EC2 Instance Connect from anywhere"
-    from_port        = 65535
-    to_port          = 65535
     protocol         = "tcp"
     cidr_blocks      = ["0.0.0.0/0"]
     ipv6_cidr_blocks = ["::/0"]
@@ -219,6 +205,9 @@ resource "aws_instance" "workload_id_demo_web" {
   security_groups = [aws_security_group.workload_id_demo_nodes_sg.name]
 
   user_data = cloudinit_config.workload_id_demo_web_cloud_init.rendered
+  user_data_replace_on_change = true
+
+  key_name = data.aws_key_pair.dave.key_name
 }
 
 resource "aws_instance" "workload_id_demo_backend_1" {
@@ -245,6 +234,9 @@ resource "aws_instance" "workload_id_demo_backend_1" {
   security_groups = [aws_security_group.workload_id_demo_nodes_sg.name]
 
   user_data = cloudinit_config.workload_id_demo_backend_1_cloud_init.rendered
+  user_data_replace_on_change = true
+
+  key_name = data.aws_key_pair.dave.key_name
 }
 
 # ip addresses
