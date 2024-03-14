@@ -2,22 +2,29 @@
 
 set -euxo pipefail
 
+TELEPORT_VERSION="15"
+
 apt-get -y update
 apt-get -y install software-properties-common
 apt-get -y install apt-transport-https
+apt-get -y install libnss3-tools
 apt-get -y install wget
-apt-get -y install awscli
+apt-get -y install dnsutils
 
-# these are pre-release binaries
-aws s3 cp s3://workload-id-demo-binaries/linux-arm64/teleport /usr/local/bin/teleport
-aws s3 cp s3://workload-id-demo-binaries/linux-arm64/tbot /usr/local/bin/tbot
+echo "-----> Downloading Teleport"
+curl https://apt.releases.teleport.dev/gpg \
+-o /usr/share/keyrings/teleport-archive-keyring.asc
 
-chmod +x /usr/local/bin/teleport
-chmod +x /usr/local/bin/tbot
+source /etc/os-release
 
+echo "deb [signed-by=/usr/share/keyrings/teleport-archive-keyring.asc] \
+https://apt.releases.teleport.dev/${ID?} ${VERSION_CODENAME?} stable/v$TELEPORT_VERSION" \
+| tee /etc/apt/sources.list.d/teleport.list > /dev/null 
+
+apt-get -y update
+apt-get -y install teleport
 echo "-----> Install SystemD"
-
-teleport install systemd > /etc/systemd/system/teleport.service
+teleport install systemd
 
 systemctl enable teleport
 systemctl start teleport
