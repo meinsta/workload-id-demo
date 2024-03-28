@@ -1,0 +1,24 @@
+{
+  "name": "workload-id-demo-web",
+  "version": "0.1.0",
+  "description": "Web page for showing SPIFFE verification status of backends",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/asteroid-earth/workload-id-demo.git"
+  },
+  "author": "Dave Sudia",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/asteroid-earth/workload-id-demo/issues"
+  },
+  "homepage": "https://github.com/asteroid-earth/workload-id-demo#readme",
+  "dependencies": {
+    "express": "^4.19.2",
+    "node-fetch": "^3.3.2"
+  }
+}

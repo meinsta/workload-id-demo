@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>My Web Page</title>
+  <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/vuetify@3.5.12/dist/vuetify.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/vuetify@3.5.12/dist/vuetify.min.js"></script>
+</head>
+<body>
+  <div id="app">
+    <v-app>
+      <v-main>
+        <v-container>
+          <v-row>
+            <v-col>
+              <v-card :color="backend1.color">
+                <v-card-title>{{backend1.name}} SPIFFE Status</v-card-title>
+                <v-card-text>
+                  <p>SVID: {{ backend1.svid }}</p>
+                  <p>Infra: {{ backend1.infra }}</p>
+                </v-card-text>
+              </v-card>
+            </v-col>
+          </v-row>
+        </v-container>
+      </v-main>
+    </v-app>
+  </div>
+
+  <script>
+    const { createApp, ref } = Vue
+    const { createVuetify } = Vuetify
+
+    const vuetify = createVuetify()
+
+    const app = createApp({
+      data() {
+        return {
+          backend1: {
+            color: '',
+            svid: '',
+            name: '',
+            infra: ''
+          }
+        }
+      },
+      methods: {
+        getBackend1() {
+          return fetch('/backends')
+          .then(response => {
+            return response.json()
+          })
+          .then(data => {
+            console.log(data)
+            this.backend1.color = 'green'
+            this.backend1.svid = data.backend1.svid
+            this.backend1.name = data.backend1.name
+            this.backend1.infra = data.backend1.infra
+          })
+          .catch(err => {
+            this.backend1Color = 'red'
+            this.message = err
+            console.error(err)
+          })
+        }
+      },
+      mounted() {
+        this.getBackend1()
+      }
+    })
+    app.use(vuetify).mount('#app')
+</script>
+</body>
+</html>
