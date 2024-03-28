@@ -52,7 +52,6 @@
             return response.json()
           })
           .then(data => {
-            console.log(data)
             this.backend1.color = 'green'
             this.backend1.svid = data.backend1.svid
             this.backend1.name = data.backend1.name
@@ -61,7 +60,6 @@
           .catch(err => {
             this.backend1Color = 'red'
             this.message = err
-            console.error(err)
           })
         }
       },
