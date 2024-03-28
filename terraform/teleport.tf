@@ -1,13 +1,13 @@
 resource "teleport_role" "workload_id_demo_web_bot_role" {
   version = "v7"
   metadata = {
-    name = "workload-id-demo-web-spiffe-bot"
+    name = "workload-id-${web_workload_name}-spiffe-bot"
   }
 
   spec = {
     allow = {
       spiffe = [{
-          path = "/workload-id-demo/demo-web"
+          path = "/workload-id-demo/${web_workload_name}"
           ip_sans = ["0.0.0.0/0"]
           dns_sans = ["*"]
       }]
@@ -18,13 +18,13 @@ resource "teleport_role" "workload_id_demo_web_bot_role" {
 resource "teleport_role" "workload_id_demo_backend_1_bot_role" {
   version = "v7"
   metadata = {
-    name = "workload-id-demo-backend-1-spiffe-bot"
+    name = "workload-id-${var.backend_one_workload_name}-spiffe-bot"
   }
 
   spec = {
     allow = {
       spiffe = [{
-          path = "/workload-id-demo/demo-backend-1"
+          path = "/workload-id-demo/${var.backend_one_workload_name}"
           ip_sans = ["0.0.0.0/0"]
           dns_sans = ["*"]
       }]
@@ -54,13 +54,13 @@ resource "teleport_provision_token" "workload_id_demo_node_token" {
 resource "teleport_provision_token" "workload_id_demo_web_bot_token" {
   version = "v2"
   metadata = {
-    name        = "workload-id-demo-web-bot"
+    name        = "workload-id-${web_workload_name}-bot"
     description = "Token for Workload ID Demo Web Bot"
   }
 
   spec = {
     roles = ["Bot"]
-    bot_name: "workload-id-demo-web-bot"
+    bot_name: "workload-id-${var.web_workload_name}-bot"
     join_method = "iam"
     allow = [
       {
@@ -74,13 +74,13 @@ resource "teleport_provision_token" "workload_id_demo_web_bot_token" {
 resource "teleport_provision_token" "workload_id_demo_backend_1_bot_token" {
   version = "v2"
   metadata = {
-    name        = "workload-id-demo-backend-1-bot"
+    name        = "workload-id-${backend_one_workload_name}-bot"
     description = "Token for Workload ID Demo backend Bot"
   }
 
   spec = {
     roles = ["Bot"]
-    bot_name: "workload-id-demo-backend-1-bot"
+    bot_name: "workload-id-${backend_one_workload_name}-bot"
     join_method = "iam"
     allow = [
       {

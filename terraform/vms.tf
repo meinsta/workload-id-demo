@@ -95,48 +95,7 @@ resource "aws_security_group" "workload_id_demo_nodes_sg" {
   }
 }
 
-#cloud init
-resource "cloudinit_config" "workload_id_demo_web_cloud_init" {
-  gzip          = false
-  base64_encode = false
-
-  part {
-    filename     = "create_tbot_config.sh"
-    content_type = "text/x-shellscript"
-
-    content = templatefile("${path.module}/create_tbot_config.sh.tftpl", {
-      teleport_addr = var.teleport_addr,
-      token_name = teleport_provision_token.workload_id_demo_web_bot_token.metadata.name,
-      workload_name = "demo-web"
-    })
-  }
-
-  part {
-    filename     = "create_teleport_config.sh"
-    content_type = "text/x-shellscript"
-
-    content = templatefile("${path.module}/create_teleport_config.sh.tftpl", {
-      teleport_addr = var.teleport_addr,
-      token_name = teleport_provision_token.workload_id_demo_node_token.metadata.name,
-      nodename = "workload-id-demo-web"
-    })
-  }
-
-  part {
-    filename     = "install_ghostunnel.sh"
-    content_type = "text/x-shellscript"
-
-    content = file("${path.module}/install_ghostunnel.sh")
-  }
-
-  part {
-    filename     = "install_teleport.sh"
-    content_type = "text/x-shellscript"
-
-    content = file("${path.module}/install_teleport.sh")
-  }
-}
-
+#backend one
 resource "cloudinit_config" "workload_id_demo_backend_1_cloud_init" {
   gzip          = false
   base64_encode = false
@@ -148,7 +107,7 @@ resource "cloudinit_config" "workload_id_demo_backend_1_cloud_init" {
     content = templatefile("${path.module}/create_tbot_config.sh.tftpl", {
       teleport_addr = var.teleport_addr,
       token_name = teleport_provision_token.workload_id_demo_backend_1_bot_token.metadata.name,
-      workload_name = "demo-backend-1"
+      workload_name = var.backend_one_workload_name
     })
   }
 
@@ -159,7 +118,7 @@ resource "cloudinit_config" "workload_id_demo_backend_1_cloud_init" {
     content = templatefile("${path.module}/create_teleport_config.sh.tftpl", {
       teleport_addr = var.teleport_addr,
       token_name = teleport_provision_token.workload_id_demo_node_token.metadata.name,
-      nodename = "workload-id-demo-backend-1"
+      nodename = "workload-id-${var.backend_one_workload_name}"
     })
   }
 
@@ -169,36 +128,18 @@ resource "cloudinit_config" "workload_id_demo_backend_1_cloud_init" {
 
     content = file("${path.module}/install_teleport.sh")
   }
-}
 
-# vms
-resource "aws_instance" "workload_id_demo_web" {
-  ami           = data.aws_ami.ubuntu.id
-  instance_type = "t4g.small"
-  associate_public_ip_address = true
+  part {
+    filename     = "start_backend.sh"
+    content_type = "text/x-shellscript"
 
-  root_block_device {
-    volume_size = 20
+    content = templatefile("${path.module}/start_backend.sh.tftpl", {
+      workload_api_socket = var.teleport_addr,
+      approved_client_spiffeid= var.web_workload_id_socket
+      backend_name = var.backend_one_workload_name,
+      backend_infra = "VM"
+    })
   }
-  
-  tags = {
-    Name = "workload-id-demo-web"
-    Owner = "Dave Sudia"
-    Environment = "workload-id-demo"
-    Service = "Workload ID Demo Web"
-  }
-
-  metadata_options {
-    http_tokens = "required"
-  }
-
-  iam_instance_profile = aws_iam_instance_profile.workload_id_demo_nodes_profile.name
-  security_groups = [aws_security_group.workload_id_demo_nodes_sg.name]
-
-  user_data = cloudinit_config.workload_id_demo_web_cloud_init.rendered
-  user_data_replace_on_change = true
-
-  key_name = data.aws_key_pair.dave.key_name
 }
 
 resource "aws_instance" "workload_id_demo_backend_1" {
@@ -211,7 +152,7 @@ resource "aws_instance" "workload_id_demo_backend_1" {
   }
   
   tags = {
-    Name = "workload-id-demo-backend-1"
+    Name = "workload-id-${var.backend_one_workload_name}"
     Owner = "Dave Sudia"
     Environment = "workload-id-demo"
     Service = "Workload ID Demo Backend 1"
@@ -230,25 +171,108 @@ resource "aws_instance" "workload_id_demo_backend_1" {
   key_name = data.aws_key_pair.dave.key_name
 }
 
+resource "aws_eip" "workload_id_demo_backend_1_eip" {
+  instance = aws_instance.workload_id_demo_backend_1.id
+
+  tags = {
+    Name = "workload-id-${var.backend_one_workload_name}"
+    Owner = "Dave Sudia"
+    Environment = "workload-id-demo"
+    Service = "Workload ID Demo Backend 1"
+  }
+}
+
+# web
+resource "cloudinit_config" "workload_id_demo_web_cloud_init" {
+  gzip          = false
+  base64_encode = false
+
+  part {
+    filename     = "create_tbot_config.sh"
+    content_type = "text/x-shellscript"
+
+    content = templatefile("${path.module}/create_tbot_config.sh.tftpl", {
+      teleport_addr = var.teleport_addr,
+      token_name = teleport_provision_token.workload_id_demo_web_bot_token.metadata.name,
+      workload_name = var.web_workload_name
+    })
+  }
+
+  part {
+    filename     = "create_teleport_config.sh"
+    content_type = "text/x-shellscript"
+
+    content = templatefile("${path.module}/create_teleport_config.sh.tftpl", {
+      teleport_addr = var.teleport_addr,
+      token_name = teleport_provision_token.workload_id_demo_node_token.metadata.name,
+      nodename = "workload-id-${var.web_workload_name}"
+    })
+  }
+
+  part {
+    filename     = "install_ghostunnel.sh"
+    content_type = "text/x-shellscript"
+
+    content = templatefile("${path.module}/install_ghostunnel.sh.tftpl", {
+      workload_api_socket = "${var.backend_one_workload_id_socket}",
+      ghostunnel_listen_addr = "localhost:8081",
+      backend_one_addr = "${aws_eip.workload_id_demo_backend_1_eip.public_ip}:443",
+      backend_one_approved_spiffeid = "${var.backend_one_spiffe_id}"
+    })
+  }
+
+  part {
+    filename     = "install_teleport.sh"
+    content_type = "text/x-shellscript"
+
+    content = file("${path.module}/install_teleport.sh")
+  }
+
+  part {
+    filename     = "start_frontend.sh"
+    content_type = "text/x-shellscript"
+
+    content = file("${path.module}/install_web.sh")
+  }
+}
+
+resource "aws_instance" "workload_id_demo_web" {
+  ami           = data.aws_ami.ubuntu.id
+  instance_type = "t4g.small"
+  associate_public_ip_address = true
+
+  root_block_device {
+    volume_size = 20
+  }
+  
+  tags = {
+    Name = "workload-id-${var.web_workload_name}"
+    Owner = "Dave Sudia"
+    Environment = "workload-id-demo"
+    Service = "Workload ID Demo Web"
+  }
+
+  metadata_options {
+    http_tokens = "required"
+  }
+
+  iam_instance_profile = aws_iam_instance_profile.workload_id_demo_nodes_profile.name
+  security_groups = [aws_security_group.workload_id_demo_nodes_sg.name]
+
+  user_data = cloudinit_config.workload_id_demo_web_cloud_init.rendered
+  user_data_replace_on_change = true
+
+  key_name = data.aws_key_pair.dave.key_name
+}
+
 # ip addresses
 resource "aws_eip" "workload_id_demo_web_eip" {
   instance = aws_instance.workload_id_demo_web.id
 
   tags = {
-    Name = "workload-id-demo-web"
+    Name = "workload-id-${var.web_workload_name}"
     Owner = "Dave Sudia"
     Environment = "workload-id-demo"
     Service = "Workload ID Demo Web"
-  }
-}
-
-resource "aws_eip" "workload_id_demo_backend_1_eip" {
-  instance = aws_instance.workload_id_demo_backend_1.id
-
-  tags = {
-    Name = "workload-id-demo-backend-1"
-    Owner = "Dave Sudia"
-    Environment = "workload-id-demo"
-    Service = "Workload ID Demo Backend 1"
   }
 }
