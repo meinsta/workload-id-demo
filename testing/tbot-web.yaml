@@ -2,19 +2,19 @@ version: v2
 auth_server: teleport-ent-15.asteroid.earth:443
 storage:
   type: directory
-  path: /opt/machine-id/demo-backend-1-storage
+  path: /opt/machine-id/demo-web-storage
 outputs:
 - type: spiffe-svid
   destination:
     type: directory
-    path: /etc/tbot/spiffe/demo-backend-1
+    path: /etc/tbot/spiffe/demo-web
   svid:
-    path: /demo-backend-1
+    path: /workload-id-demo/demo-web
     sans:
       ip:
       - 0.0.0.0
 services:
 - type: spiffe-workload-api
-  listen: unix:///etc/tbot/demo-backend-1.sock
+  listen: unix:///Users/davesudia/.tbot-web/demo-web.sock
   svids:
-  - path: /demo-backend-1
+  - path: /workload-id-demo/demo-web
