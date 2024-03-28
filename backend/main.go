@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/spiffe/go-spiffe/v2/spiffeid"
@@ -13,8 +14,13 @@ import (
 	"github.com/spiffe/go-spiffe/v2/workloadapi"
 )
 
-// Workload API socket path
-const socketPath = "unix:///etc/tbot/demo-backend-1.sock"
+type Config struct {
+	SocketPath             string
+	ApprovedClientSPIFFEID string
+	Name                   string
+	Infra                  string
+	Port                   string
+}
 
 func main() {
 	log.Println("Server is starting...")
@@ -27,8 +33,16 @@ func run(ctx context.Context) error {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
+	config := Config{
+		SocketPath:             os.Getenv("BACKEND_SOCKET_PATH"),
+		ApprovedClientSPIFFEID: os.Getenv("BACKEND_APPROVED_CLIENT_SPIFFEID"),
+		Name:                   os.Getenv("BACKEND_NAME"),
+		Infra:                  os.Getenv("BACKEND_INFRA"),
+		Port:                   os.Getenv("BACKEND_PORT"),
+	}
+
 	// Create a `workloadapi.X509Source`
-	source, err := workloadapi.NewX509Source(ctx, workloadapi.WithClientOptions(workloadapi.WithAddr(socketPath)))
+	source, err := workloadapi.NewX509Source(ctx, workloadapi.WithClientOptions(workloadapi.WithAddr(config.SocketPath)))
 	if err != nil {
 		return fmt.Errorf("unable to create X509Source: %w", err)
 	}
@@ -40,11 +54,11 @@ func run(ctx context.Context) error {
 	}
 	fmt.Println(svid.ID.String())
 
-	clientID := spiffeid.RequireFromString("spiffe://teleport-ent-15-workload.asteroid.earth/client")
+	clientID := spiffeid.RequireFromString(config.ApprovedClientSPIFFEID)
 
 	tlsConfig := tlsconfig.MTLSServerConfig(source, source, tlsconfig.AuthorizeID(clientID))
 	server := &http.Server{
-		Addr:              ":8443",
+		Addr:              fmt.Sprintf(":%s", config.Port),
 		TLSConfig:         tlsConfig,
 		ReadHeaderTimeout: time.Second * 10,
 	}
@@ -55,8 +69,8 @@ func run(ctx context.Context) error {
 
 		data := make(map[string]string)
 		data["svid"] = svid.ID.String()
-		data["name"] = "Backend 1"
-		data["infra"] = "VM"
+		data["name"] = config.Name
+		data["infra"] = config.Infra
 
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(data)
