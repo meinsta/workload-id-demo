@@ -1,6 +1,6 @@
 module github.com/asteroid-earth/workload-id-demo/backend1
 
-go 1.18
+go 1.22
 
 require github.com/spiffe/go-spiffe/v2 v2.1.7
 
