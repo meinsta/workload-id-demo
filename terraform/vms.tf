@@ -112,10 +112,10 @@ resource "cloudinit_config" "workload_id_demo_backend_1_cloud_init" {
   }
 
   part {
-    filename     = "create_teleport_config.sh"
+    filename     = "create_backend_teleport_config.sh"
     content_type = "text/x-shellscript"
 
-    content = templatefile("${path.module}/create_teleport_config.sh.tftpl", {
+    content = templatefile("${path.module}/create_backend_teleport_config.sh.tftpl", {
       teleport_addr = var.teleport_addr,
       token_name = teleport_provision_token.workload_id_demo_node_token.metadata.name,
       nodename = "workload-id-${var.backend_one_workload_name}"
@@ -199,10 +199,10 @@ resource "cloudinit_config" "workload_id_demo_web_cloud_init" {
   }
 
   part {
-    filename     = "create_teleport_config.sh"
+    filename     = "create_web_teleport_config.sh"
     content_type = "text/x-shellscript"
 
-    content = templatefile("${path.module}/create_teleport_config.sh.tftpl", {
+    content = templatefile("${path.module}/create_web_teleport_config.sh.tftpl", {
       teleport_addr = var.teleport_addr,
       token_name = teleport_provision_token.workload_id_demo_node_token.metadata.name,
       nodename = "workload-id-${var.web_workload_name}"
@@ -214,7 +214,7 @@ resource "cloudinit_config" "workload_id_demo_web_cloud_init" {
     content_type = "text/x-shellscript"
 
     content = templatefile("${path.module}/install_ghostunnel.sh.tftpl", {
-      workload_api_socket = "${var.backend_one_workload_id_socket}",
+      workload_api_socket = "${var.web_workload_id_socket}",
       ghostunnel_listen_addr = "localhost:8081",
       backend_one_addr = "${aws_eip.workload_id_demo_backend_1_eip.public_ip}:443",
       backend_one_approved_spiffeid = "${var.backend_one_spiffe_id}"
@@ -229,10 +229,10 @@ resource "cloudinit_config" "workload_id_demo_web_cloud_init" {
   }
 
   part {
-    filename     = "start_frontend.sh"
+    filename     = "start_web.sh"
     content_type = "text/x-shellscript"
 
-    content = file("${path.module}/install_web.sh")
+    content = file("${path.module}/start_web.sh")
   }
 }
 

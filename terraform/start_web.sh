@@ -12,7 +12,7 @@ apt install -y nodejs
 
 # pull code
 cd / && git clone https://github.com/asteroid-earth/workload-id-demo.git && \
-  cd /workload-id-demo/frontend && \
+  cd /workload-id-demo/web && \
   npm install
 
 # run app
@@ -28,7 +28,8 @@ Group=root
 Restart=on-failure
 Environment="WEB_PORT=80"
 Environment="WEB_GHOSTUNNEL_PORT=8081"
-ExecStart=cd /workload-id-demo/web && npm start
+WorkingDirectory=/workload-id-demo/web
+ExecStart=npm start
 ExecReload=/bin/kill -HUP $MAINPID
 PIDFile=/run/demo-web.pid
 LimitNOFILE=524288

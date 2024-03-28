@@ -9,12 +9,11 @@ apt install -y wget
 wget https://go.dev/dl/go1.22.1.linux-arm64.tar.gz
 rm -rf /usr/local/go && tar -C /usr/local -xzf go1.22.1.linux-arm64.tar.gz
 echo "export PATH=$PATH:/usr/local/go/bin" >> /etc/profile
-source /etc/profile
 
 # pull code and build binary
 cd / && git clone https://github.com/asteroid-earth/workload-id-demo.git && \
   cd /workload-id-demo/backend && \
-  go build main.go && \
+  /usr/local/go/bin/go build main.go && \
   mv ./main /usr/local/bin/demo-backend
 
 # run app
@@ -32,7 +31,7 @@ Environment="BACKEND_SOCKET_PATH=${workload_api_socket}"
 Environment="BACKEND_APPROVED_CLIENT_SPIFFEID=${approved_client_spiffeid}"
 Environment="BACKEND_NAME=${backend_name}"
 Environment="BACKEND_INFRA=${backend_infra}"
-Environment="BACKEND_PORT=443
+Environment="BACKEND_PORT=443"
 ExecStart=demo-backend
 ExecReload=/bin/kill -HUP $MAINPID
 PIDFile=/run/demo-backend.pid
