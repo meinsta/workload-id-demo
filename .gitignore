@@ -3,3 +3,4 @@ prereqs
 .terraform
 vars.tf
 main.tf
+errored.tfstate
