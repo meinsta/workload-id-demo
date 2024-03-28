@@ -1,0 +1,46 @@
+#! /usr/bin/env bash
+
+set -euxo pipefail
+
+apt update -y
+apt install -y wget
+
+# install go
+wget https://go.dev/dl/go1.22.1.linux-arm64.tar.gz
+rm -rf /usr/local/go && tar -C /usr/local -xzf go1.22.1.linux-arm64.tar.gz
+echo "export PATH=$PATH:/usr/local/go/bin" >> /etc/profile
+source /etc/profile
+
+# pull code and build binary
+cd / && git clone https://github.com/asteroid-earth/workload-id-demo.git && \
+  cd /workload-id-demo/backend && \
+  go build main.go && \
+  mv ./main /usr/local/bin/demo-backend
+
+# run app
+cat << 'EOF' > /etc/systemd/system/demo-backend.service
+[Unit]
+Description=Workload ID Demo Backend
+After=network.target
+
+[Service]
+Type=simple
+User=root
+Group=root
+Restart=on-failure
+Environment="BACKEND_SOCKET_PATH=${workload_api_socket}"
+Environment="BACKEND_APPROVED_CLIENT_SPIFFEID=${approved_client_spiffeid}"
+Environment="BACKEND_NAME=${backend_name}"
+Environment="BACKEND_INFRA=${backend_infra}"
+Environment="BACKEND_PORT=443
+ExecStart=demo-backend
+ExecReload=/bin/kill -HUP $MAINPID
+PIDFile=/run/demo-backend.pid
+LimitNOFILE=524288
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+systemctl enable demo-backend
+systemctl start demo-backend
