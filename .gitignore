@@ -1,0 +1,8 @@
+prereqs
+.terraform.lock.hcl
+.terraform
+vars.tf
+main.tf
+errored.tfstate
+node_modules/
+main
