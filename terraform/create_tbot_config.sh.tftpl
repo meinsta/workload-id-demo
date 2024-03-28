@@ -2,6 +2,8 @@
 
 set -euxo pipefail
 
+mkdir /home/ubuntu/.tbot
+
 cat << 'EOF' > /etc/systemd/system/tbot.service
 [Unit]
 Description=Teleport Machine ID Service
@@ -37,10 +39,10 @@ outputs:
     type: directory
     path: /etc/tbot/spiffe/${workload_name}
   svid:
-    path: /${workload_name}
+    path: /workload-id-demo/${workload_name}
 services:
 - type: spiffe-workload-api
-  listen: unix:///etc/tbot/${workload_name}.sock
+  listen: unix:///home/ubuntu/.tbot/${workload_name}.sock
   svids:
-  - path: /${workload_name}
+  - path: /workload-id-demo/${workload_name}
 EOF
