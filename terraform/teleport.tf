@@ -7,7 +7,7 @@ resource "teleport_role" "workload_id_demo_web_bot_role" {
   spec = {
     allow = {
       spiffe = [{
-          path = "/demo-web"
+          path = "/workload-id-demo/demo-web"
           ip_sans = ["0.0.0.0/0"]
           dns_sans = ["*"]
       }]
@@ -24,7 +24,7 @@ resource "teleport_role" "workload_id_demo_backend_1_bot_role" {
   spec = {
     allow = {
       spiffe = [{
-          path = "/demo-backend-1"
+          path = "/workload-id-demo/demo-backend-1"
           ip_sans = ["0.0.0.0/0"]
           dns_sans = ["*"]
       }]
