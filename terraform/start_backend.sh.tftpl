@@ -13,9 +13,12 @@ echo "export PATH=$PATH:/usr/local/go/bin" >> /etc/profile
 mkdir /root/go
 mkdir /root/go/pkg
 mkdir /root/go/pkg/mod
+mkdir /root/.cache
+mkdir /root/.cache/go-build
 
 export GOMODCACHE=/root/go/pkg/mod
 export GOPATH=/root/go
+export GOCACHE=/root/.cache/go-build
 
 # pull code and build binary
 cd / && git clone https://github.com/asteroid-earth/workload-id-demo.git && \
