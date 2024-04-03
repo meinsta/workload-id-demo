@@ -134,8 +134,8 @@ resource "cloudinit_config" "workload_id_demo_backend_1_cloud_init" {
     content_type = "text/x-shellscript"
 
     content = templatefile("${path.module}/start_backend.sh.tftpl", {
-      workload_api_socket = var.teleport_addr,
-      approved_client_spiffeid= var.web_workload_id_socket
+      workload_api_socket = var.backend_one_workload_id_socket,
+      approved_client_spiffeid= var.web_spiffe_id
       backend_name = "Backend 1",
       backend_infra = "VM"
     })
