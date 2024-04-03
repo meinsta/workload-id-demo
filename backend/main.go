@@ -71,6 +71,7 @@ func run(ctx context.Context) error {
 		data["svid"] = svid.ID.String()
 		data["name"] = config.Name
 		data["infra"] = config.Infra
+		data["acceptedSvids"] = config.ApprovedClientSPIFFEID
 
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(data)
