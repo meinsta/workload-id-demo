@@ -6,16 +6,17 @@ const ghostunnelPort = process.env.WEB_GHOSTUNNEL_PORT || 8081;
 
 const app = express();
 
-app.get('/backends', (req, res) => {
+app.get('/backends', async (req, res) => {
   let backendStatuses = {};
-  fetch(`http://localhost:${ghostunnelPort}`)
-  .then(response => response.json()).then(data => backendStatuses.backend1 = data)
-  // .then(() => fetch('http://localhost:8082/')
-  // .then(response => backendStatuses.backend2 = response.json())
-  // .then(() => fetch('https://localhost:8083/')
-  // .then(response => backendStatuses.backend3 = response.json())
-  .then(() => res.json(backendStatuses));
-  // ));
+  try {
+    const response = await fetch(`http://localhost:${ghostunnelPort}`)
+    const resJson = await response.json();
+    backendStatuses.backend1 = resJson;
+    res.status(200).json(backendStatuses);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send(err)
+  }
 });
 
 app.use(express.static('public'));

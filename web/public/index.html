@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>My Web Page</title>
+  <title>Teleport Workload ID Demo</title>
   <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/vuetify@3.5.12/dist/vuetify.min.css">
   <script src="https://cdn.jsdelivr.net/npm/vuetify@3.5.12/dist/vuetify.min.js"></script>
@@ -12,17 +12,130 @@
     <v-app>
       <v-main>
         <v-container>
+          <div class="border-md pa-4 mb-4">
+            <h1>VM</h1>
+            <v-row>
+              <v-col sm="6">
+                <v-card color="blue-grey">
+                  <v-card-title>Teleport Workload ID Demo</v-card-title>
+                  <v-card-text>
+                    This app serves up the page you are seeing now.
+                    It is written in Node, and has no SPIFFE support built-in.
+                    Instead, it relies on the Ghostunnel proxy to handle SPIFFE
+                    interaction so that we don't have to make any code changes.
+                  </v-card-text>
+                  <v-list bg-color="blue-grey">
+                    <v-list-subheader>SVID</v-list-subheader>
+                    <v-list-item
+                      title="No SVID"
+                    >
+                    </v-list-item>
+                  </v-list>
+                </v-card>
+              </v-col>
+            </v-row>
+            <v-row>
+              <v-col sm="3"></v-col>
+              <v-col sm="1">
+                <v-divider :thickness="6" color="gray" class="border-opacity-50" vertical></v-divider>
+              </v-col>
+            </v-row>
+            <v-row>
+              <v-col cols="12" sm="6">
+                <v-card color="blue-grey">
+                  <v-card-title>Ghostunnel Proxy</v-card-title>
+                  <v-card-text>
+                    The Ghostunnel proxy is a SPIFFE-compatible proxy.
+                    It can be used in client or server mode. We are using it in client mode on the same VM as the Node app.
+                    It receives requests from the Node app, and forwards them on, while sending a SPIFFE ID and verifying
+                    the ID from the server.
+                    <v-list bg-color="blue-grey">
+                      <v-list-subheader>SVID</v-list-subheader>
+                      <v-list-item
+                        title="spiffe://teleport-ent-15.asteroid.earth/workload-id-demo/demo-web"
+                      >
+                      </v-list-item>
+                    </v-list>
+                    <v-list bg-color="blue-grey">
+                      <v-list-subheader>Accepted SVIDs</v-list-subheader>
+                      <v-list-item
+                        title="spiffe://teleport-ent-15.asteroid.earth/workload-id-demo/demo-backend-1"
+                      ></v-list-item>
+                      <v-list-item
+                        title="spiffe://teleport-ent-15.asteroid.earth/workload-id-demo/demo-backend-2"
+                      ></v-list-item>
+                    </v-list>
+                  </v-card-text>
+                </v-card>
+              </v-col>
+              <v-col cols="12" sm="1">
+                <v-divider :thickness="6" color="gray" class="border-opacity-50"></v-divider>
+              </v-col>  
+              <v-col cols="12"  sm="5">
+                <v-card color="purple">
+                  <v-card-title>tbot</v-card-title>
+                  <v-card-text>
+                    tbot runs on the same VM as the Node app and Ghostunnel.
+                    It authenticates with Teleport using a Bot Role,
+                    and exposes the SVIDs via the SPIFFE Workload API.
+                  </v-card-text>
+                </v-card>
+              </v-col>
+            </v-row>
+          </div>
           <v-row>
-            <v-col>
-              <v-card :color="backend1.color">
-                <v-card-title>{{backend1.name}} SPIFFE Status</v-card-title>
-                <v-card-text>
-                  <p>SVID: {{ backend1.svid }}</p>
-                  <p>Infra: {{ backend1.infra }}</p>
-                </v-card-text>
-              </v-card>
+            <v-col sm="3"></v-col>
+            <v-col sm="1">
+              <v-divider :thickness="6" color="gray" class="border-opacity-50" vertical></v-divider>
             </v-col>
+            <v-col sm="8"></v-col>
           </v-row>
+          <div class="border-md pa-4 mt-4">
+            <h1>{{backend1.infra}}</h1>
+            <v-row>
+              <v-col sm="6">
+                <v-card :color="backend1.color">
+                  <v-card-title>{{backend1.name}} SPIFFE Status</v-card-title>
+                  <v-card-text>
+                    This is a backend server written in Go using the go-spiffe library.
+                    It verifies the SPIFFE ID sent by Ghostunnel when it receives requests.
+                    The SVID and Infra fields below are populated by the response from this server,
+                    received via mTLS thanks to SPIFFE and Teleport.
+                    <v-list v-if="backend1.svid" :bg-color="backend1.color">
+                      <v-list-subheader>SVID</v-list-subheader>
+                      <v-list-item
+                        :title="backend1.svid"
+                      >
+                      </v-list-item>
+                    </v-list>
+                    <v-list v-if="backend1.acceptedSvids" :bg-color="backend1.color">
+                      <v-list-subheader>Accepted SVIDs</v-list-subheader>
+                      <v-list-item
+                        v-for="n in backend1.acceptedSvids"
+                        :key="n"
+                        :title="n"
+                      ></v-list-item>
+                    </v-list>
+                    <br v-if="backend1.err"></br>
+                    <p v-if="backend1.err">Error: {{ backend1.err }}</p>
+                  </v-card-text>
+                </v-card>
+              </v-col>
+              <v-col sm="1">
+                <v-divider :thickness="6" color="gray" class="border-opacity-50"></v-divider>
+              </v-col>  
+              <v-col sm="5">
+                <v-card color="purple">
+                  <v-card-title>tbot</v-card-title>
+                  <v-card-text>
+                    tbot runs on the same VM as the backend app.
+                    It authenticates with Teleport using a Bot Role,
+                    and exposes the SVIDs via the SPIFFE Workload API.
+                  </v-card-text>
+                </v-card>
+              </v-col>
+            </v-row>
+          </div>
         </v-container>
       </v-main>
     </v-app>
@@ -41,7 +154,9 @@
             color: '',
             svid: '',
             name: '',
-            infra: ''
+            infra: '',
+            err: '',
+            acceptedSvids: null
           }
         }
       },
@@ -49,17 +164,26 @@
         getBackend1() {
           return fetch('/backends')
           .then(response => {
-            return response.json()
+            if (response.ok) {
+              return response.json()
+            } else {
+              this.backend1.color = 'red'
+              const errMessage = `Failed to fetch data: ${response.status} ${response.statusText}`
+              this.backend1.err = errMessage
+              throw new Error(errMessage)
+            }
           })
           .then(data => {
             this.backend1.color = 'green'
             this.backend1.svid = data.backend1.svid
             this.backend1.name = data.backend1.name
             this.backend1.infra = data.backend1.infra
+            this.backend1.acceptedSvids = [data.backend1.acceptedSvids]
           })
           .catch(err => {
-            this.backend1Color = 'red'
-            this.message = err
+            console.error(err)
+            this.backend1.color = 'red'
+            this.backend1.err = err
           })
         }
       },
