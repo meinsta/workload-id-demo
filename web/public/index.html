@@ -76,8 +76,9 @@
                   <v-card-title>tbot</v-card-title>
                   <v-card-text>
                     tbot runs on the same VM as the Node app and Ghostunnel.
-                    It authenticates with Teleport using a Bot Role,
-                    and exposes the SVIDs via the SPIFFE Workload API.
+                    It authenticates with Teleport using a Bot Token.
+                    The SVIDs it is allowed to create are controlled by its Role,
+                    and it exposes the SVIDs via the SPIFFE Workload API.
                   </v-card-text>
                 </v-card>
               </v-col>
@@ -129,8 +130,9 @@
                   <v-card-title>tbot</v-card-title>
                   <v-card-text>
                     tbot runs on the same VM as the backend app.
-                    It authenticates with Teleport using a Bot Role,
-                    and exposes the SVIDs via the SPIFFE Workload API.
+                    It authenticates with Teleport using a Bot Token.
+                    The SVIDs it is allowed to create are controlled by its Role,
+                    and it exposes the SVIDs via the SPIFFE Workload API.
                   </v-card-text>
                 </v-card>
               </v-col>
