@@ -73,12 +73,19 @@
               </v-col>  
               <v-col cols="12"  sm="5">
                 <v-card color="purple">
-                  <v-card-title>tbot</v-card-title>
+                  <v-card-title>workload-id-demo-web-bot</v-card-title>
                   <v-card-text>
                     tbot runs on the same VM as the Node app and Ghostunnel.
                     It authenticates with Teleport using a Bot Token.
                     The SVIDs it is allowed to create are controlled by its Role,
                     and it exposes the SVIDs via the SPIFFE Workload API.
+                    <v-list :bg-color="purple">
+                      <v-list-subheader>SVIDs Allowed by Role</v-list-subheader>
+                      <v-list-item
+                        title="spiffe://teleport-ent-15.asteroid.earth/workload-id-demo/demo-web"
+                      >
+                      </v-list-item>
+                    </v-list>
                   </v-card-text>
                 </v-card>
               </v-col>
@@ -127,12 +134,19 @@
               </v-col>  
               <v-col sm="5">
                 <v-card color="purple">
-                  <v-card-title>tbot</v-card-title>
+                  <v-card-title>workload-id-demo-backend-1-spiffe-bot</v-card-title>
                   <v-card-text>
                     tbot runs on the same VM as the backend app.
                     It authenticates with Teleport using a Bot Token.
                     The SVIDs it is allowed to create are controlled by its Role,
                     and it exposes the SVIDs via the SPIFFE Workload API.
+                    <v-list :bg-color="purple">
+                      <v-list-subheader>SVIDs Allowed by Role</v-list-subheader>
+                      <v-list-item
+                      :title="backend1.svid"
+                      >
+                      </v-list-item>
+                    </v-list>
                   </v-card-text>
                 </v-card>
               </v-col>
