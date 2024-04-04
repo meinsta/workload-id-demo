@@ -25,7 +25,7 @@
                     interaction so that we don't have to make any code changes.
                   </v-card-text>
                   <v-list bg-color="blue-grey">
-                    <v-list-subheader>SVID</v-list-subheader>
+                    <v-list-subheader>Workload's SPIFFE ID</v-list-subheader>
                     <v-list-item
                       title="No SVID"
                     >
@@ -48,16 +48,16 @@
                     The Ghostunnel proxy is a SPIFFE-compatible proxy.
                     It can be used in client or server mode. We are using it in client mode on the same VM as the Node app.
                     It receives requests from the Node app, and forwards them on, while sending a SPIFFE ID and verifying
-                    the ID from the server.
+                    the ID from the server. Therefore, communication between Ghostunnel and the backend uses mTLS.
                     <v-list bg-color="blue-grey">
-                      <v-list-subheader>SVID</v-list-subheader>
+                      <v-list-subheader>Workload's SPIFFE ID</v-list-subheader>
                       <v-list-item
                         title="spiffe://teleport-ent-15.asteroid.earth/workload-id-demo/demo-web"
                       >
                       </v-list-item>
                     </v-list>
                     <v-list bg-color="blue-grey">
-                      <v-list-subheader>Accepted SVIDs</v-list-subheader>
+                      <v-list-subheader>Authorized SPIFFE IDs</v-list-subheader>
                       <v-list-item
                         title="spiffe://teleport-ent-15.asteroid.earth/workload-id-demo/demo-backend-1"
                       ></v-list-item>
@@ -100,17 +100,17 @@
                   <v-card-text>
                     This is a backend server written in Go using the go-spiffe library.
                     It verifies the SPIFFE ID sent by Ghostunnel when it receives requests.
-                    The SVID and Infra fields below are populated by the response from this server,
-                    received via mTLS thanks to SPIFFE and Teleport.
+                    The SPIFFE ID below is populated by the response from
+                    this server, received via mTLS thanks to SPIFFE and Teleport.
                     <v-list v-if="backend1.svid" :bg-color="backend1.color">
-                      <v-list-subheader>SVID</v-list-subheader>
+                      <v-list-subheader>Workload's SPIFFE ID</v-list-subheader>
                       <v-list-item
                         :title="backend1.svid"
                       >
                       </v-list-item>
                     </v-list>
                     <v-list v-if="backend1.acceptedSvids" :bg-color="backend1.color">
-                      <v-list-subheader>Accepted SVIDs</v-list-subheader>
+                      <v-list-subheader>Authorized SPIFFE IDs</v-list-subheader>
                       <v-list-item
                         v-for="n in backend1.acceptedSvids"
                         :key="n"
