@@ -19,7 +19,7 @@ guaranteed mutual identity.
 
 ### Accessing the Demo
 
-The live demo page is protected via Teleport App Access. You need access to the
+The [live demo page](https://workload-id-demo.teleport-ent-15.asteroid.earth/) is protected via Teleport App Access. You need access to the
 demo Teleport cluster running at https://teleport-ent-15.asteroid.earth.
 If you are a Teleport employee, please reach out to Ben or Dave for access.
 
