@@ -2,16 +2,22 @@ import express from 'express';
 import fetch from 'node-fetch';
 
 const port = process.env.WEB_PORT || 8080;
-const ghostunnelPort = process.env.WEB_GHOSTUNNEL_PORT || 8081;
+const ghostunnelOnePort = process.env.WEB_GHOSTUNNEL_ONE_PORT || 8081;
+const ghostunnelTwoPort = process.env.WEB_GHOSTUNNEL_TWO_PORT || 8082;
 
 const app = express();
 
 app.get('/backends', async (req, res) => {
   let backendStatuses = {};
   try {
-    const response = await fetch(`http://localhost:${ghostunnelPort}`)
-    const resJson = await response.json();
-    backendStatuses.backend1 = resJson;
+    const responseOne = await fetch(`http://localhost:${ghostunnelOnePort}`)
+    const resJsonOne = await responseOne.json();
+    backendStatuses.backend1 = resJsonOne;
+
+    const responseTwo = await fetch(`http://localhost:${ghostunnelTwoPort}`)
+    const resJsonTwo = await responseTwo.json();
+    backendStatuses.backend2 = resJsonTwo;
+
     res.status(200).json(backendStatuses);
   } catch (err) {
     console.error(err);

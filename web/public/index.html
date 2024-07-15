@@ -86,6 +86,15 @@
                       >
                       </v-list-item>
                     </v-list>
+                    <v-list bg-color="purple">
+                      <v-list-subheader>Authorized UID/GID</v-list-subheader>
+                      <v-list-item
+                        title="UID: 3002"
+                      ></v-list-item>
+                      <v-list-item
+                        title="GID: 3002"
+                      ></v-list-item>
+                    </v-list>
                   </v-card-text>
                 </v-card>
               </v-col>
@@ -96,62 +105,147 @@
             <v-col sm="1">
               <v-divider :thickness="6" color="gray" class="border-opacity-50" vertical></v-divider>
             </v-col>
-            <v-col sm="8"></v-col>
+            <v-col sm="3"></v-col>
+            <v-col sm="1">
+              <v-divider :thickness="6" color="gray" class="border-opacity-50" vertical></v-divider>
+            </v-col>
+            <v-col sm="3"></v-col>
           </v-row>
-          <div class="border-md pa-4 mt-4">
-            <h1>{{backend1.infra}}</h1>
-            <v-row>
-              <v-col sm="6">
-                <v-card :color="backend1.color">
-                  <v-card-title>{{backend1.name}} SPIFFE Status</v-card-title>
-                  <v-card-text>
-                    This is a backend server written in Go using the go-spiffe library.
-                    It verifies the SPIFFE ID sent by Ghostunnel when it receives requests.
-                    The SPIFFE ID below is populated by the response from
-                    this server, received via mTLS thanks to SPIFFE and Teleport.
-                    <v-list v-if="backend1.svid" :bg-color="backend1.color">
-                      <v-list-subheader>Workload's SPIFFE ID</v-list-subheader>
-                      <v-list-item
-                        :title="backend1.svid"
-                      >
-                      </v-list-item>
-                    </v-list>
-                    <v-list v-if="backend1.acceptedSvids" :bg-color="backend1.color">
-                      <v-list-subheader>Authorized SPIFFE IDs</v-list-subheader>
-                      <v-list-item
-                        v-for="n in backend1.acceptedSvids"
-                        :key="n"
-                        :title="n"
-                      ></v-list-item>
-                    </v-list>
-                    <br v-if="backend1.err"></br>
-                    <p v-if="backend1.err">Error: {{ backend1.err }}</p>
-                  </v-card-text>
-                </v-card>
-              </v-col>
-              <v-col sm="1">
-                <v-divider :thickness="6" color="gray" class="border-opacity-50"></v-divider>
-              </v-col>  
-              <v-col sm="5">
-                <v-card color="purple">
-                  <v-card-title>workload-id-demo-backend-1-spiffe-bot</v-card-title>
-                  <v-card-text>
-                    tbot runs on the same VM as the backend app.
-                    It authenticates with Teleport using a Bot Token.
-                    The SVIDs it is allowed to create are controlled by its Role,
-                    and it exposes the SVIDs via the SPIFFE Workload API.
-                    <v-list bg-color="purple">
-                      <v-list-subheader>SVIDs Allowed by Role</v-list-subheader>
-                      <v-list-item
-                      :title="backend1.svid"
-                      >
-                      </v-list-item>
-                    </v-list>
-                  </v-card-text>
-                </v-card>
-              </v-col>
-            </v-row>
-          </div>
+          <v-row>
+            <v-col sm="6">
+              <div class="border-md pa-4 mt-4">
+                <h1>{{backend1.infra}}</h1>
+                <v-row>
+                  <v-col sm="12">
+                    <v-card :color="backend1.color">
+                      <v-card-title>{{backend1.name}} SPIFFE Status</v-card-title>
+                      <v-card-text>
+                        This is a backend server written in Go using the go-spiffe library.
+                        It verifies the SPIFFE ID sent by Ghostunnel when it receives requests.
+                        The SPIFFE ID below is populated by the response from
+                        this server, received via mTLS thanks to SPIFFE and Teleport.
+                        <v-list v-if="backend1.svid" :bg-color="backend1.color">
+                          <v-list-subheader>Workload's SPIFFE ID</v-list-subheader>
+                          <v-list-item
+                            :title="backend1.svid"
+                          >
+                          </v-list-item>
+                        </v-list>
+                        <v-list v-if="backend1.acceptedSvids" :bg-color="backend1.color">
+                          <v-list-subheader>Authorized SPIFFE IDs</v-list-subheader>
+                          <v-list-item
+                            v-for="n in backend1.acceptedSvids"
+                            :key="n"
+                            :title="n"
+                          ></v-list-item>
+                        </v-list>
+                        <br v-if="backend1.err"></br>
+                        <p v-if="backend1.err">Error: {{ backend1.err }}</p>
+                      </v-card-text>
+                    </v-card>
+                  </v-col>
+                  <v-row>
+                    <v-col sm="3"></v-col>
+                    <v-col sm="1">
+                      <v-divider :thickness="6" color="gray" class="border-opacity-50" vertical></v-divider>
+                    </v-col>
+                    <v-col sm="8"></v-col>
+                  </v-row>
+                  <v-row>
+                    <v-col sm="12">
+                      <v-card color="purple">
+                        <v-card-title>workload-id-demo-backend-1-spiffe-bot</v-card-title>
+                        <v-card-text>
+                          tbot runs on the same VM as the backend app.
+                          It authenticates with Teleport using a Bot Token.
+                          The SVIDs it is allowed to create are controlled by its Role,
+                          and it exposes the SVIDs via the SPIFFE Workload API.
+                          <v-list bg-color="purple">
+                            <v-list-subheader>SVIDs Allowed by Role</v-list-subheader>
+                            <v-list-item
+                            :title="backend1.svid"
+                            >
+                            </v-list-item>
+                          </v-list>
+                          <v-list bg-color="purple">
+                            <v-list-subheader>Authorized UID/GID</v-list-subheader>
+                            <v-list-item
+                              title="UID: 3000"
+                            ></v-list-item>
+                            <v-list-item
+                              title="GID: 3000"
+                            ></v-list-item>
+                          </v-list>
+                        </v-card-text>
+                      </v-card>
+                    </v-col>
+                  </v-row>
+                </v-row>
+              </div>
+            </v-col>
+            <v-col sm="6">
+              <div class="border-md pa-4 mt-4">
+                <h1>{{backend2.infra}}</h1>
+                <v-row>
+                  <v-col sm="12">
+                    <v-card :color="backend2.color">
+                      <v-card-title>{{backend2.name}} SPIFFE Status</v-card-title>
+                      <v-card-text>
+                        This is a backend server written in Go using the go-spiffe library.
+                        It verifies the SPIFFE ID sent by Ghostunnel when it receives requests.
+                        The SPIFFE ID below is populated by the response from
+                        this server, received via mTLS thanks to SPIFFE and Teleport.
+                        <v-list v-if="backend2.svid" :bg-color="backend2.color">
+                          <v-list-subheader>Workload's SPIFFE ID</v-list-subheader>
+                          <v-list-item
+                            :title="backend2.svid"
+                          >
+                          </v-list-item>
+                        </v-list>
+                        <v-list v-if="backend2.acceptedSvids" :bg-color="backend2.color">
+                          <v-list-subheader>Authorized SPIFFE IDs</v-list-subheader>
+                          <v-list-item
+                            v-for="n in backend2.acceptedSvids"
+                            :key="n"
+                            :title="n"
+                          ></v-list-item>
+                        </v-list>
+                        <br v-if="backend2.err"></br>
+                        <p v-if="backend2.err">Error: {{ backend2.err }}</p>
+                      </v-card-text>
+                    </v-card>
+                  </v-col>
+                  <v-row>
+                    <v-col sm="3"></v-col>
+                    <v-col sm="1">
+                      <v-divider :thickness="6" color="gray" class="border-opacity-50" vertical></v-divider>
+                    </v-col>
+                    <v-col sm="8"></v-col>
+                  </v-row>
+                  <v-row>
+                    <v-col sm="12">
+                      <v-card color="purple">
+                        <v-card-title>workload-id-demo-backend-1-spiffe-bot</v-card-title>
+                        <v-card-text>
+                          tbot runs in the same pod in Kubernetes as the backend app.
+                          It authenticates with Teleport using a Bot Token.
+                          The SVIDs it is allowed to create are controlled by its Role,
+                          and it exposes the SVIDs via the SPIFFE Workload API within a shared volume mount in the pod.
+                          <v-list bg-color="purple">
+                            <v-list-subheader>SVIDs Allowed by Role</v-list-subheader>
+                            <v-list-item
+                            :title="backend2.svid"
+                            >
+                            </v-list-item>
+                          </v-list>
+                        </v-card-text>
+                      </v-card>
+                    </v-col>
+                  </v-row>
+                </v-row>
+              </div>
+            </v-col>
+          </v-row>
         </v-container>
       </v-main>
     </v-app>
@@ -167,6 +261,14 @@
       data() {
         return {
           backend1: {
+            color: '',
+            svid: '',
+            name: '',
+            infra: '',
+            err: '',
+            acceptedSvids: null
+          },
+          backend2: {
             color: '',
             svid: '',
             name: '',
