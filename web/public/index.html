@@ -225,7 +225,7 @@
                   <v-row>
                     <v-col sm="12">
                       <v-card color="purple">
-                        <v-card-title>workload-id-demo-backend-1-spiffe-bot</v-card-title>
+                        <v-card-title>workload-id-demo-backend-2-spiffe-bot</v-card-title>
                         <v-card-text>
                           tbot runs in the same pod in Kubernetes as the backend app.
                           It authenticates with Teleport using a Bot Token.
@@ -280,7 +280,7 @@
       },
       methods: {
         getBackend1() {
-          return fetch('/backends')
+          return fetch('/backend1')
           .then(response => {
             if (response.ok) {
               return response.json()
@@ -303,10 +303,36 @@
             this.backend1.color = 'red'
             this.backend1.err = err
           })
+        },
+        getBackend2() {
+          return fetch('/backend2')
+          .then(response => {
+            if (response.ok) {
+              return response.json()
+            } else {
+              this.backend2.color = 'red'
+              const errMessage = `Failed to fetch data: ${response.status} ${response.statusText}`
+              this.backend2.err = errMessage
+              throw new Error(errMessage)
+            }
+          })
+          .then(data => {
+            this.backend2.color = 'green'
+            this.backend2.svid = data.backend2.svid
+            this.backend2.name = data.backend2.name
+            this.backend2.infra = data.backend2.infra
+            this.backend2.acceptedSvids = [data.backend2.acceptedSvids]
+          })
+          .catch(err => {
+            console.error(err)
+            this.backend2.color = 'red'
+            this.backend2.err = err
+          })
         }
       },
       mounted() {
         this.getBackend1()
+        this.getBackend2()
       }
     })
     app.use(vuetify).mount('#app')

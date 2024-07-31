@@ -39,6 +39,7 @@ resource "aws_iam_role" "workload_id_demo_nodes_role" {
   tags = {
     Owner = "Dave Sudia"
     Environment = "workload-id-demo"
+    "teleport.dev/creator" = "david.sudia@goteleport.com"
   }
 }
 
@@ -79,6 +80,15 @@ resource "aws_security_group" "workload_id_demo_nodes_sg" {
     ipv6_cidr_blocks = ["::/0"]
   }
 
+  ingress {
+    description      = "SSH from anywhere"
+    from_port        = 22
+    to_port          = 22
+    protocol         = "tcp"
+    cidr_blocks      = ["0.0.0.0/0"]
+    ipv6_cidr_blocks = ["::/0"]
+  }
+
   egress {
     from_port        = 0
     to_port          = 0
@@ -92,10 +102,11 @@ resource "aws_security_group" "workload_id_demo_nodes_sg" {
     Owner = "Dave Sudia"
     Environment = "workload-id-demo"
     Service = "Workload ID Demo Web"
+    "teleport.dev/creator" = "david.sudia@goteleport.com"
   }
 }
 
-#backend one
+# backend one
 resource "cloudinit_config" "workload_id_demo_backend_1_cloud_init" {
   gzip          = false
   base64_encode = false
@@ -106,8 +117,11 @@ resource "cloudinit_config" "workload_id_demo_backend_1_cloud_init" {
 
     content = templatefile("${path.module}/create_tbot_config.sh.tftpl", {
       teleport_addr = var.teleport_addr,
+      user = "placeholder",
       token_name = teleport_provision_token.workload_id_demo_backend_1_bot_token.metadata.name,
-      workload_name = var.backend_one_workload_name
+      workload_name = var.backend_one_workload_name,
+      workload_uid = "3000",
+      workload_gid = "3000"
     })
   }
 
@@ -193,8 +207,11 @@ resource "cloudinit_config" "workload_id_demo_web_cloud_init" {
 
     content = templatefile("${path.module}/create_tbot_config.sh.tftpl", {
       teleport_addr = var.teleport_addr,
+      user = "placeholder",
       token_name = teleport_provision_token.workload_id_demo_web_bot_token.metadata.name,
-      workload_name = var.web_workload_name
+      workload_name = var.web_workload_name,
+      workload_uid = "3002",
+      workload_gid = "3002"
     })
   }
 
@@ -215,9 +232,12 @@ resource "cloudinit_config" "workload_id_demo_web_cloud_init" {
 
     content = templatefile("${path.module}/install_ghostunnel.sh.tftpl", {
       workload_api_socket = "${var.web_workload_id_socket}",
-      ghostunnel_listen_addr = "localhost:8081",
+      ghostunnel_one_listen_addr = "localhost:8081",
       backend_one_addr = "${aws_eip.workload_id_demo_backend_1_eip.public_ip}:443",
       backend_one_approved_spiffeid = "${var.backend_one_spiffe_id}"
+      ghostunnel_two_listen_addr = "localhost:8082",
+      backend_two_addr = "35.230.100.30:443"
+      backend_two_approved_spiffeid = "${var.backend_two_spiffe_id}"
     })
   }
 
@@ -250,6 +270,7 @@ resource "aws_instance" "workload_id_demo_web" {
     Owner = "Dave Sudia"
     Environment = "workload-id-demo"
     Service = "Workload ID Demo Web"
+    "teleport.dev/creator" = "david.sudia@goteleport.com"
   }
 
   metadata_options {
@@ -274,5 +295,6 @@ resource "aws_eip" "workload_id_demo_web_eip" {
     Owner = "Dave Sudia"
     Environment = "workload-id-demo"
     Service = "Workload ID Demo Web"
+    "teleport.dev/creator" = "david.sudia@goteleport.com"
   }
 }

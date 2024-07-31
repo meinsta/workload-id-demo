@@ -2,7 +2,7 @@
 
 set -euxo pipefail
 
-TELEPORT_VERSION="15"
+TELEPORT_VERSION="16"
 
 apt-get -y update
 apt-get -y install software-properties-common
