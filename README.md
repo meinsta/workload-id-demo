@@ -8,11 +8,11 @@ Demo infrastructure and applications of Teleport Workload ID
 The demo consists of four core components:
 * A Node app that has no inherent SPIFFE support, which calls to
 * A [Ghostunnel](https://github.com/ghostunnel/ghostunnel) proxy instance running in client mode, which calls to
-* A backend, written in Go, using the `go-spiffe` SDK
+* Two backends, written in Go, using the `go-spiffe` SDK
 * `tbot` instances that provide SVIDs for Ghostunnel and the backend app
 
 The Node app and Ghostunnel are deployed to a VM together,
-and the backend is deployed to its own VM.
+Backend 1 is deployed to its own VM, and Backend 2 is deployed to Kubernetes.
 
 By using mutually verifying SPIFFE IDs, the two apps communicate via mTLS wit
 guaranteed mutual identity.
@@ -25,7 +25,7 @@ If you are a Teleport employee, please reach out to Ben or Dave for access.
 
 ## Components
 
-### Backend
+### Backend 1
 
 The [backend app](./backend/main.go) is fairly simple. It is a go HTTP(S) server
 that uses the `spiffe-go` library to communicate with the workload API. It takes
@@ -35,6 +35,11 @@ its own SPIFFE ID, and what IDs it verifies.
 
 The goal with this code is that it can be deployed more times in other infrastructure,
 easily expanding the demo. See [Future Improvements](#future-improvements) below.
+
+### Backend 2
+
+This is the same app as above, but it's running in Kubernetes rather than a VM, using tbot as a DaemonSet
+that uses ServiceAccount and Namespace for workload attestation.
 
 ### Web
 
@@ -64,6 +69,11 @@ using `$ tctl create -f bots.yaml`
     * [create_tbot_config.sh](./terraform/create_tbot_config.sh.tftpl) is on both VMs, setting up `tbot` as a systemd service to join the Teleport cluster and start issuing SVIDs
     * [install_ghostunnel.sh](./terraform/install_ghostunnel.sh.tftpl) and [start_web.sh](./terraform/start_web.sh) are on the web VM to start the apps as systemd services
     * [start_backend.sh](./terraform/start_backend.sh.tftpl) is on the backend VM to start the app as a systemd service
+* Found in [k8s.tf](./terraform/k8s.tf) and [k8s-sidecar.tf](./terraform/k8s-sidecar.tf)
+  * Resources for running tbot for Workload ID either as a DaemonSet or as a sidecar. The DaemonSet is preferable but the sidecar is another architectural option.
+  * **NOTE: You need a pre-existing K8s cluster to feed
+  into Terraform as a provider. This TF does not stand up
+  a cluster.** That is a future improvement I would like to make.
 
 ## Development
 
