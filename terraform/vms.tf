@@ -85,8 +85,7 @@ resource "aws_security_group" "workload_id_demo_nodes_sg" {
     from_port        = 22
     to_port          = 22
     protocol         = "tcp"
-    cidr_blocks      = ["0.0.0.0/0"]
-    ipv6_cidr_blocks = ["::/0"]
+    cidr_blocks      = ["50.236.225.250/32"]
   }
 
   egress {
@@ -107,7 +106,7 @@ resource "aws_security_group" "workload_id_demo_nodes_sg" {
 }
 
 # backend one
-resource "cloudinit_config" "workload_id_demo_backend_1_cloud_init" {
+data "cloudinit_config" "workload_id_demo_backend_1_cloud_init" {
   gzip          = false
   base64_encode = false
 
@@ -165,11 +164,20 @@ resource "aws_instance" "workload_id_demo_backend_1" {
     volume_size = 20
   }
   
+  volume_tags = {
+    Name = "workload-id-${var.backend_one_workload_name}"
+    Owner = "Dave Sudia"
+    Environment = "workload-id-demo"
+    Service = "Workload ID Demo Backend 1"
+    "teleport.dev/creator" = "david.sudia@goteleport.com"
+  }
+
   tags = {
     Name = "workload-id-${var.backend_one_workload_name}"
     Owner = "Dave Sudia"
     Environment = "workload-id-demo"
     Service = "Workload ID Demo Backend 1"
+    "teleport.dev/creator" = "david.sudia@goteleport.com"
   }
 
   metadata_options {
@@ -179,7 +187,7 @@ resource "aws_instance" "workload_id_demo_backend_1" {
   iam_instance_profile = aws_iam_instance_profile.workload_id_demo_nodes_profile.name
   security_groups = [aws_security_group.workload_id_demo_nodes_sg.name]
 
-  user_data = cloudinit_config.workload_id_demo_backend_1_cloud_init.rendered
+  user_data = data.cloudinit_config.workload_id_demo_backend_1_cloud_init.rendered
   user_data_replace_on_change = true
 
   key_name = data.aws_key_pair.dave.key_name
@@ -193,11 +201,12 @@ resource "aws_eip" "workload_id_demo_backend_1_eip" {
     Owner = "Dave Sudia"
     Environment = "workload-id-demo"
     Service = "Workload ID Demo Backend 1"
+    "teleport.dev/creator" = "david.sudia@goteleport.com"
   }
 }
 
 # web
-resource "cloudinit_config" "workload_id_demo_web_cloud_init" {
+data "cloudinit_config" "workload_id_demo_web_cloud_init" {
   gzip          = false
   base64_encode = false
 
@@ -264,6 +273,14 @@ resource "aws_instance" "workload_id_demo_web" {
   root_block_device {
     volume_size = 20
   }
+
+  volume_tags = {
+    Name = "workload-id-${var.backend_one_workload_name}"
+    Owner = "Dave Sudia"
+    Environment = "workload-id-demo"
+    Service = "Workload ID Demo Backend 1"
+    "teleport.dev/creator" = "david.sudia@goteleport.com"
+  }
   
   tags = {
     Name = "workload-id-${var.web_workload_name}"
@@ -280,7 +297,7 @@ resource "aws_instance" "workload_id_demo_web" {
   iam_instance_profile = aws_iam_instance_profile.workload_id_demo_nodes_profile.name
   security_groups = [aws_security_group.workload_id_demo_nodes_sg.name]
 
-  user_data = cloudinit_config.workload_id_demo_web_cloud_init.rendered
+  user_data = data.cloudinit_config.workload_id_demo_web_cloud_init.rendered
   user_data_replace_on_change = true
 
   key_name = data.aws_key_pair.dave.key_name

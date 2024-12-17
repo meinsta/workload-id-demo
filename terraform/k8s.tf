@@ -57,12 +57,12 @@ resource "kubernetes_config_map" "tbot_attestation" {
     storage = {
       type = "memory"
     }
-    proxy_server = "teleport-16-ent.asteroid.earth:443"
+    proxy_server = "teleport-17-ent.asteroid.earth:443"
     services = [
       {
         type = "spiffe-workload-api"
         listen = "unix:///run/tbot/sockets/demo-backend-2.sock"
-        attestor = {
+        attestors = {
           kubernetes = {
             enabled = true
             kubelet = {
@@ -138,7 +138,7 @@ resource "kubernetes_daemonset" "tbot_attestation" {
               service_account_token {
                 path = "join-sa-token"
                 expiration_seconds = 600
-                audience = "teleport-16-ent.asteroid.earth"
+                audience = "teleport-17-ent.asteroid.earth"
               }
             }
           }
@@ -146,12 +146,12 @@ resource "kubernetes_daemonset" "tbot_attestation" {
         
         container {
           name = "tbot-attestation"
-          image = "teleportnoah/tbot-98b2649e22f38ccf271ae7888304f8cb@sha256:978b36bfca0b9a1d1ff30164f776fd61dc2b6131d90d122d1b3d9e0e4f9e9c13"
+          image = "public.ecr.aws/gravitational/tbot-distroless:17.0.1"
           image_pull_policy = "Always"
           security_context {
             privileged = true
           }
-          args = ["start", "-c", "/config/tbot.yaml", "--log-format", "json"]
+          args = ["start", "-c", "/config/tbot.yaml", "--log-format", "json", "--debug"]
           volume_mount {
             name = "config"
             mount_path = "/config"
@@ -234,7 +234,7 @@ resource "kubernetes_deployment" "demo_backend_2" {
           }
           env {
             name = "BACKEND_APPROVED_CLIENT_SPIFFEID"
-            value = "spiffe://teleport-16-ent.asteroid.earth/workload-id-demo/demo-web"
+            value = "spiffe://teleport-17-ent.asteroid.earth/workload-id-demo/demo-web"
           }
           env {
             name = "BACKEND_NAME"
