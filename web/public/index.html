@@ -38,11 +38,11 @@
                   <v-card-title>Ghostunnel Proxy</v-card-title>
                   <v-card-text>
                     <p><b>Technology:</b> Ghostunnel Proxy</p>
-                    <p><b>Workload's SPIFFE ID:</b> spiffe://teleport-ent-15.asteroid.earth/workload-id-demo/demo-web</p>
+                    <p><b>Workload's SPIFFE ID:</b>spiffe://teleport-17-ent.asteroid.earth/workload-id-demo/demo-web</p>
                     <p><b>Authorized SPIFFE IDs:</b></p>
                     <ul>
-                      <li>spiffe://teleport-ent-15.asteroid.earth/workload-id-demo/demo-backend-1</li>
-                      <li>spiffe://teleport-ent-15.asteroid.earth/workload-id-demo/demo-backend-2</li>
+                      <li>spiffe://teleport-17-ent.asteroid.earth/workload-id-demo/demo-backend-1</li>
+                      <li>spiffe://teleport-17-ent.asteroid.earth/workload-id-demo/demo-backend-2</li>
                     </ul>
                   </v-card-text>
                 </v-card>
@@ -58,7 +58,7 @@
                     It issues SVIDs based on its role. It runs on the VM with the app/proxy.</p>
                     <p><b>SVIDs allowed by role:</b></p>
                     <ul>
-                      <li>spiffe://teleport-ent-15.asteroid.earth/workload-id-demo/demo-web</li>
+                      <li>spiffe://teleport-17-ent.asteroid.earth/workload-id-demo/demo-web</li>
                     </ul>
                     <p><b>Authorized UID/GID:</b></p>
                     <ul>
@@ -95,7 +95,7 @@
                         <p><b>Workload's SPIFFE ID:</b> {{ backend1.svid }}</p>
                         <p><b>Authorized SPIFFE IDs:</b></p>
                         <ul>
-                          <li v-for v-for="n in backend1.acceptedSvids" :key="n"> {{ n }}</li>
+                          <li>spiffe://teleport-17-ent.asteroid.earth/workload-id-demo/demo-web</li>
                         </ul>
                         <br v-if="backend1.err"></br>
                         <p v-if="backend1.err">Error: {{ backend1.err }}</p>
@@ -137,18 +137,16 @@
                 <h1>{{ backend2.infra }}</h1>
                 <v-row>
                   <v-col sm="12">
-                    <v-card :color="backend2.color">
-                      <v-card-title>{{backend2.name}} SPIFFE Status</v-card-title>
+                    <v-card :color="green">
+                      <v-card-title>Backend 2 SPIFFE Status</v-card-title>
                       <<v-card-text>
                         <p><b>Technology:</b> Go</p>
                         <p><b>SPIFFE Integration:</b> go-spiffe library</p>
-                        <p><b>Workload's SPIFFE ID:</b> {{ backend1.svid }}</p>
+                        <p><b>Workload's SPIFFE ID:</b> spiffe://teleport-federation-demo.asteroid.earth/workload-id-demo/demo-backend-2</p>
                         <p><b>Authorized SPIFFE IDs:</b></p>
                         <ul>
-                          <li v-for v-for="n in backend2.acceptedSvids" :key="n"> {{ n }}</li>
+                          <li>spiffe://teleport-17-ent.asteroid.earth/workload-id-demo/demo-web</li>
                         </ul>
-                        <br v-if="backend2.err"></br>
-                        <p v-if="backend2.err">Error: {{ backend2.err }}</p>
                       </v-card-text>
                     </v-card>
                   </v-col>
@@ -168,7 +166,7 @@
                           It issues SVIDs based on its role. It runs as a daemonset on the nodes.</p>
                           <p><b>SVIDs allowed by role:</b></p>
                           <ul>
-                            <li>{{ backend2.svid }}</li>
+                            <li>spiffe://teleport-17-ent.asteroid.earth/workload-id-demo/demo-backend-2</li>
                           </ul>
                           <p><b>Authorized Pod Metadata:</b></p>
                           <ul>

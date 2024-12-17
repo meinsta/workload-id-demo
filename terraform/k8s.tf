@@ -151,7 +151,7 @@ resource "kubernetes_daemonset" "tbot_attestation" {
           security_context {
             privileged = true
           }
-          args = ["start", "-c", "/config/tbot.yaml", "--log-format", "json", "--debug"]
+          args = ["start", "-c", "/config/tbot.yaml", "--log-format", "json"]
           volume_mount {
             name = "config"
             mount_path = "/config"
