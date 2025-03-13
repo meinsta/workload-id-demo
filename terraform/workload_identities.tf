@@ -58,7 +58,7 @@ resource "teleport_workload_identity" "workload_id_demo_web_wid" {
       ]
     }
     spiffe = {
-      id: "spiffe://my.teleport.cluster/customer-a/site-b/scanner-c"
+      id: "workload-id-demo/${var.web_workload_name}"
     }
   }
 }
