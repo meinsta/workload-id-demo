@@ -134,12 +134,12 @@
             </v-col>
             <v-col sm="6">
               <div class="border-md pa-4 mt-4">
-                <h1>{{ backend2.infra }}</h1>
+                <h1>K8s</h1>
                 <v-row>
                   <v-col sm="12">
-                    <v-card :color="green">
+                    <v-card color="green">
                       <v-card-title>Backend 2 SPIFFE Status</v-card-title>
-                      <<v-card-text>
+                      <v-card-text>
                         <p><b>Technology:</b> Go</p>
                         <p><b>SPIFFE Integration:</b> go-spiffe library</p>
                         <p><b>Workload's SPIFFE ID:</b> spiffe://teleport-federation-demo.asteroid.earth/workload-id-demo/demo-backend-2</p>
@@ -166,7 +166,7 @@
                           It issues SVIDs based on its role. It runs as a daemonset on the nodes.</p>
                           <p><b>SVIDs allowed by role:</b></p>
                           <ul>
-                            <li>spiffe://teleport-17-ent.asteroid.earth/workload-id-demo/demo-backend-2</li>
+                            <li>spiffe://teleport-federation-demo.asteroid.earth/workload-id-demo/demo-backend-2</li>
                           </ul>
                           <p><b>Authorized Pod Metadata:</b></p>
                           <ul>

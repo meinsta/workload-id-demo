@@ -60,27 +60,11 @@ resource "kubernetes_config_map" "tbot_attestation" {
     proxy_server = "teleport-17-ent.asteroid.earth:443"
     services = [
       {
-        type = "spiffe-workload-api"
+        type = "workload-identity-api"
         listen = "unix:///run/tbot/sockets/demo-backend-2.sock"
-        attestors = {
-          kubernetes = {
-            enabled = true
-            kubelet = {
-              skip_verify = true
-            }
-          }
+        selector = {
+          name = "workload-id-demo-demo-backend-2"
         }
-        svids = [
-          {
-            path = "/workload-id-demo/demo-backend-2"
-            rules = [{
-              kubernetes = {
-                namespace = "workload-id-demo"
-                service_account = "demo-backend-2"
-              }
-            }]
-          }
-        ]
       }
     ]
     })

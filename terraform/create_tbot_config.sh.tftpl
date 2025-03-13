@@ -33,20 +33,9 @@ onboarding:
   token: ${token_name}
 storage:
   type: memory
-outputs:
-- type: spiffe-svid
-  destination:
-    type: directory
-    path: /etc/tbot/spiffe/${workload_name}
-  svid:
-    path: /workload-id-demo/${workload_name}
 services:
-- type: spiffe-workload-api
+- type: workload-identity-api
   listen: unix:///tmp/tbot/${workload_name}.sock
-  svids:
-  - path: /workload-id-demo/${workload_name}
-    rules:
-    - unix:
-        uid: ${workload_uid}
-        gid: ${workload_gid}
+  selector:
+    name: workload-id-demo-${workload_name}
 EOF
