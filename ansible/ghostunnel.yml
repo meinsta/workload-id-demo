@@ -1,0 +1,193 @@
+---
+- name: Setup Ghostunnel services
+  hosts: w2w-demo-web.mwidemo.cloud.gravitational.io
+  remote_user: root
+  vars:
+    ghostunnel_version: "v1.8.4"
+    ghostunnel_uid: 3001
+    ghostunnel_gid: 3001
+    # Environment variables - set these values as needed
+    workload_api_socket: "unix:///tmp/tbot/workload.sock"
+    ghostunnel_one_listen_addr: "127.0.0.1:8081"
+    backend_one_addr: "internal-a81787beac9154dbeb36cad52203e802-1768298982.us-west-2.elb.amazonaws.com:443"
+    backend_one_approved_spiffeid: "spiffe://mwidemo.cloud.gravitational.io/apps/w2w-demo/backend-1"
+    ghostunnel_two_listen_addr: "127.0.0.1:8082"
+    backend_two_addr: "internal-a1bdfdb9a2eb645fbad842afe7758dec-477733828.us-west-2.elb.amazonaws.com:443"
+    backend_two_approved_spiffeid: "spiffe://mwidemo.cloud.gravitational.io/apps/w2w-demo/backend-2"
+  
+  tasks:
+    - name: Create ghostunnel group
+      group:
+        name: ghostunnel
+        gid: "{{ ghostunnel_gid }}"
+        state: present
+
+    - name: Create ghostunnel user
+      user:
+        name: ghostunnel
+        uid: "{{ ghostunnel_uid }}"
+        group: ghostunnel
+        system: yes
+        shell: /bin/false
+        home: /nonexistent
+        create_home: no
+        state: present
+
+    - name: Download ghostunnel binary
+      get_url:
+        url: "https://github.com/ghostunnel/ghostunnel/releases/download/{{ ghostunnel_version }}/ghostunnel-linux-arm64"
+        dest: /usr/local/bin/ghostunnel
+        owner: ghostunnel
+        group: ghostunnel
+        mode: '0755'
+
+    - name: Add tbot dir in temp for sockets
+      ansible.builtin.file:
+        path: /tmp/tbot
+        state: directory
+        recurse: yes
+        owner: ghostunnel
+        group: ghostunnel
+        mode: '0700'
+
+    - name: Create config file for tbot
+      copy:
+        content: |
+          version: v2
+          auth_server: mwidemo.cloud.gravitational.io:443
+          onboarding:
+            join_method: iam
+            token: w2w-demo-web-bot
+          storage:
+            type: memory
+          services:
+          - type: workload-identity-api
+            listen: unix:///tmp/tbot/workload.sock
+            selector:
+              labels:
+                env: [w2w-demo]
+                component: [web]
+        dest: /etc/tbot.yaml
+        owner: ghostunnel
+        group: ghostunnel
+        mode: '0644'
+      notify: restart tbot
+    
+    - name: Create systemd service file for tbot
+      copy:
+        content: |
+          [Unit]
+          Description=tbot - Teleport Machine ID Service
+          After=network.target
+
+          [Service]
+          Type=simple
+          User=ghostunnel
+          Group=ghostunnel
+          Restart=always
+          RestartSec=5
+          Environment="TELEPORT_ANONYMOUS_TELEMETRY=0"
+          ExecStart=/usr/local/bin/tbot start -c /etc/tbot.yaml
+          ExecReload=/bin/kill -HUP $MAINPID
+          PIDFile=/run/tbot.pid
+          LimitNOFILE=524288
+
+          [Install]
+          WantedBy=multi-user.target
+        dest: /etc/systemd/system/tbot.service
+        owner: root
+        group: root
+        mode: '0644'
+      notify: reload systemd
+
+    - name: Create systemd service file for ghostunnel1
+      copy:
+        content: |
+          [Unit]
+          Description=Ghostunnel Client Service 1
+          After=network.target
+
+          [Service]
+          Type=simple
+          User=ghostunnel
+          Group=ghostunnel
+          Restart=always
+          Environment=WORKLOAD_API_SOCKET={{ workload_api_socket }}
+          Environment=GHOSTUNNEL_ONE_LISTEN_ADDR={{ ghostunnel_one_listen_addr }}
+          Environment=BACKEND_ONE_ADDR={{ backend_one_addr }}
+          Environment=BACKEND_ONE_APPROVED_SPIFFEID={{ backend_one_approved_spiffeid }}
+          ExecStart=/usr/local/bin/ghostunnel client \
+            --use-workload-api-addr "$WORKLOAD_API_SOCKET" \
+            --listen "$GHOSTUNNEL_ONE_LISTEN_ADDR" \
+            --target "$BACKEND_ONE_ADDR" \
+            --verify-uri "$BACKEND_ONE_APPROVED_SPIFFEID"
+
+          [Install]
+          WantedBy=multi-user.target
+        dest: /etc/systemd/system/ghostunnel1.service
+        owner: root
+        group: root
+        mode: '0644'
+      notify: reload systemd
+
+    - name: Create systemd service file for ghostunnel2
+      copy:
+        content: |
+          [Unit]
+          Description=Ghostunnel Client Service 2
+          After=network.target
+
+          [Service]
+          Type=simple
+          User=ghostunnel
+          Group=ghostunnel
+          Restart=always
+          Environment=WORKLOAD_API_SOCKET={{ workload_api_socket }}
+          Environment=GHOSTUNNEL_TWO_LISTEN_ADDR={{ ghostunnel_two_listen_addr }}
+          Environment=BACKEND_TWO_ADDR={{ backend_two_addr }}
+          Environment=BACKEND_TWO_APPROVED_SPIFFEID={{ backend_two_approved_spiffeid }}
+          ExecStart=/usr/local/bin/ghostunnel client \
+            --use-workload-api-addr "$WORKLOAD_API_SOCKET" \
+            --listen "$GHOSTUNNEL_TWO_LISTEN_ADDR" \
+            --target "$BACKEND_TWO_ADDR" \
+            --verify-uri "$BACKEND_TWO_APPROVED_SPIFFEID"
+
+          [Install]
+          WantedBy=multi-user.target
+        dest: /etc/systemd/system/ghostunnel2.service
+        owner: root
+        group: root
+        mode: '0644'
+      notify: reload systemd
+
+    - name: Start and enable tbot service
+      systemd:
+        name: tbot
+        state: started
+        enabled: yes
+        daemon_reload: yes
+
+    - name: Start and enable ghostunnel1 service
+      systemd:
+        name: ghostunnel1
+        state: started
+        enabled: yes
+        daemon_reload: yes
+
+    - name: Start and enable ghostunnel2 service
+      systemd:
+        name: ghostunnel2
+        state: started
+        enabled: yes
+        daemon_reload: yes
+
+  handlers:
+    - name: reload systemd
+      systemd:
+        daemon_reload: yes
+    - name: restart tbot
+      systemd:
+        name: tbot
+        state: restarted
+        enabled: yes
+      when: ansible_facts.services['tbot.service'] is defined

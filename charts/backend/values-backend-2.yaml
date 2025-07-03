@@ -1,0 +1,34 @@
+---
+app:
+  name: backend-2
+  namespace: w2w-demo
+  replicas: 1
+
+image:
+  repository: 668558765449.dkr.ecr.us-west-2.amazonaws.com/mwi-demo-10bbb2a
+  tag: "backend-pr-2-2b10a3c6"
+  pullPolicy: Always
+
+serviceAccount:
+  create: true
+  name: backend-2
+
+service:
+  type: LoadBalancer
+  port: 443
+  targetPort: 3000
+  annotations:
+    service.beta.kubernetes.io/aws-load-balancer-internal: "true"
+
+env:
+  BACKEND_SOCKET_PATH: "unix:///run/tbot/sockets/workload.sock"
+  BACKEND_APPROVED_CLIENT_SPIFFEID: "spiffe://mwidemo.cloud.gravitational.io/apps/w2w-demo/web"
+  BACKEND_NAME: "Backend 2"
+  BACKEND_INFRA: "kubernetes"
+  BACKEND_PORT: "3000"
+
+volumes:
+  tbotSockets:
+    hostPath: "/run/tbot/sockets"
+    mountPath: "/run/tbot/sockets"
+    readOnly: true

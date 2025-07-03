@@ -1,0 +1,66 @@
+---
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: {{ .Values.serviceAccount.name }}
+  namespace: {{ .Values.global.namespace }}
+spec:
+  selector:
+    matchLabels:
+      {{- range $key, $value := .Values.daemonset.labels }}
+      {{ $key }}: {{ $value }}
+      {{- end }}
+  template:
+    metadata:
+      labels:
+        {{- range $key, $value := .Values.daemonset.labels }}
+        {{ $key }}: {{ $value }}
+        {{- end }}
+    spec:
+      securityContext:
+        runAsUser: {{ .Values.tbot.securityContext.runAsUser }}
+        runAsGroup: {{ .Values.tbot.securityContext.runAsGroup }}
+      hostPID: {{ .Values.tbot.hostPid }}
+      serviceAccountName: {{ .Values.serviceAccount.name }}
+      volumes:
+        - name: config
+          configMap:
+            name: {{ .Values.serviceAccount.name }}
+        - name: tbot-sockets
+          hostPath:
+            path: {{ .Values.tbot.volumes.socketsPath }}
+            type: {{ .Values.tbot.volumes.socketsType }}
+        - name: join-sa-token
+          projected:
+            sources:
+              - serviceAccountToken:
+                  path: join-sa-token
+                  expirationSeconds: {{ .Values.tbot.serviceAccountToken.expirationSeconds }}
+                  audience: {{ .Values.tbot.serviceAccountToken.audience }}
+      containers:
+        - name: tbot
+          image: "{{ .Values.tbot.image.repository }}:{{ .Values.tbot.image.tag }}"
+          imagePullPolicy: {{ .Values.tbot.image.pullPolicy }}
+          securityContext:
+            privileged: {{ .Values.tbot.securityContext.privileged }}
+          args:
+            - "start"
+            - "-c"
+            - "/config/tbot.yaml"
+            - "--log-format"
+            - "json"
+          volumeMounts:
+            - name: config
+              mountPath: /config
+            - name: tbot-sockets
+              mountPath: {{ .Values.tbot.volumes.socketsPath }}
+              readOnly: false
+            - name: join-sa-token
+              mountPath: /var/run/secrets/tokens
+          env:
+            - name: TELEPORT_NODE_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+            - name: KUBERNETES_TOKEN_PATH
+              value: /var/run/secrets/tokens/join-sa-token

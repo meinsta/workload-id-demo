@@ -1,0 +1,195 @@
+---
+- name: Deploy Workload ID Demo Web Application
+  hosts: w2w-demo-web.mwidemo.cloud.gravitational.io
+  remote_user: root
+  vars:
+    app_user: w2w-demo-web
+    app_group: w2w-demo-web
+    app_uid: 3000
+    app_gid: 3000
+    app_directory: /home/w2w-demo-web
+    web_port: 8080
+    ghostunnel1_port: 8081
+    ghostunnel2_port: 8082
+    service_name: w2w-demo-web
+    container_name: w2w-demo-web-container
+    # This variable should be passed from the GitHub Actions workflow
+    web_image_uri: "{{ image_uri | default('668558765449.dkr.ecr.us-west-2.amazonaws.com/mwi-demo-10bbb2a:web-latest') }}"
+
+  tasks:
+    - name: Update apt package cache
+      apt:
+        update_cache: yes
+        cache_valid_time: 3600
+
+    - name: Install required packages for Docker
+      apt:
+        name:
+          - apt-transport-https
+          - ca-certificates
+          - curl
+          - gnupg
+          - lsb-release
+          - software-properties-common
+        state: present
+
+    - name: Add Docker GPG key
+      apt_key:
+        url: https://download.docker.com/linux/ubuntu/gpg
+        state: present
+
+    - name: Add Docker repository
+      apt_repository:
+        repo: "deb [arch={{ ansible_architecture | replace('x86_64', 'amd64') | replace('aarch64', 'arm64') }}] https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable"
+        state: present
+
+    - name: Install Docker
+      apt:
+        name:
+          - docker-ce
+          - docker-ce-cli
+          - containerd.io
+          - docker-buildx-plugin
+          - docker-compose-plugin
+        state: present
+        update_cache: yes
+
+    - name: Start and enable Docker service
+      systemd:
+        name: docker
+        state: started
+        enabled: yes
+
+    - name: Create application group
+      group:
+        name: "{{ app_group }}"
+        gid: "{{ app_gid }}"
+        state: present
+
+    - name: Create application user
+      user:
+        name: "{{ app_user }}"
+        uid: "{{ app_uid }}"
+        group: "{{ app_group }}"
+        shell: /bin/bash
+        home: "/home/{{ app_user }}"
+        create_home: yes
+        groups: docker
+        append: yes
+        state: present
+
+    - name: Create AWS directory
+      file:
+        path: /home/{{ app_user }}/.aws
+        owner: "{{ app_user }}"
+        group: "{{ app_group }}"
+        mode: '0700'
+        state: directory
+
+    - name: Configure AWS CLI for ECR authentication
+      copy:
+        dest: /home/{{ app_user }}/.aws/config
+        content: |
+          [default]
+          region = us-west-2
+          [profile w2w-demo-deployment]
+          region = us-west-2
+          credential_source = Ec2InstanceMetadata
+        owner: "{{ app_user }}"
+        group: "{{ app_group }}"
+        mode: '0600'
+
+    - name: Install AWS CLI
+      snap:
+        name: aws-cli
+        classic: yes
+
+    - name: Download and install amazon-ecr-credential-helper
+      get_url:
+        url: "https://amazon-ecr-credential-helper-releases.s3.us-east-2.amazonaws.com/0.10.1/linux-{{ ansible_architecture | replace('x86_64', 'amd64') | replace('aarch64', 'arm64') }}/docker-credential-ecr-login"
+        dest: /usr/local/bin/docker-credential-ecr-login
+        mode: '0755'
+        owner: root
+        group: root
+
+    - name: Create Docker config directory for user
+      file:
+        path: /home/{{ app_user }}/.docker
+        owner: "{{ app_user }}"
+        group: "{{ app_group }}"
+        mode: '0700'
+        state: directory
+
+    - name: Configure Docker to use ECR credential helper
+      copy:
+        dest: /home/{{ app_user }}/.docker/config.json
+        content: |
+          {
+            "credsStore": "ecr-login"
+          }
+        owner: "{{ app_user }}"
+        group: "{{ app_group }}"
+        mode: '0600'
+
+    - name: Stop existing container if running
+      docker_container:
+        name: "{{ container_name }}"
+        state: absent
+      ignore_errors: yes
+
+    - name: Pull Docker image
+      docker_image:
+        name: "{{ web_image_uri }}"
+        source: pull
+        force_source: yes
+      become_user: "{{ app_user }}"
+      environment:
+        AWS_PROFILE: w2w-demo-deployment
+
+    - name: Create systemd service file for Docker container
+      copy:
+        dest: /etc/systemd/system/{{ service_name }}.service
+        content: |
+          [Unit]
+          Description=Workload ID Demo Web Container
+          After=network.target docker.service
+          Requires=docker.service
+
+          [Service]
+          Type=oneshot
+          RemainAfterExit=true
+          User={{ app_user }}
+          Group={{ app_group }}
+          WorkingDirectory={{ app_directory }}
+          ExecStartPre=-/usr/bin/docker stop {{ container_name }}
+          ExecStartPre=-/usr/bin/docker rm {{ container_name }}
+          ExecStart=/usr/bin/docker run -d \
+            --name {{ container_name }} \
+            --restart unless-stopped \
+            -e WEB_PORT=8080 \
+            -e WEB_GHOSTUNNEL_ONE_PORT={{ ghostunnel1_port }} \
+            -e WEB_GHOSTUNNEL_TWO_PORT={{ ghostunnel2_port }} \
+            --network host \
+            {{ web_image_uri }}
+          ExecStop=/usr/bin/docker stop {{ container_name }}
+          ExecStopPost=/usr/bin/docker rm {{ container_name }}
+          Restart=on-failure
+          RestartSec=5
+
+          [Install]
+          WantedBy=multi-user.target
+        mode: '0644'
+      notify:
+        - Reload systemd
+        - Enable and start service
+
+  handlers:
+    - name: Reload systemd
+      systemd:
+        daemon_reload: yes
+
+    - name: Enable and start service
+      systemd:
+        name: "{{ service_name }}"
+        enabled: yes
+        state: started

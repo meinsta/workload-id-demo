@@ -1,0 +1,99 @@
+name: Cleanup Old Images
+
+on:
+  schedule:
+    # Run weekly on Sundays at 2 AM UTC
+    - cron: '0 2 * * 0'
+  workflow_dispatch:
+    inputs:
+      days_to_keep:
+        description: 'Number of days to keep images'
+        required: true
+        default: '180'
+        type: string
+
+env:
+  ECR_REGISTRY: 668558765449.dkr.ecr.us-west-2.amazonaws.com
+  ECR_REPOSITORY: mwi-demo-10bbb2a
+  AWS_REGION: us-west-2
+
+jobs:
+  cleanup:
+    name: Cleanup Old ECR Images
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Teleport authentication
+        run: |
+          wget https://rolesanywhere.amazonaws.com/releases/1.5.0/X86_64/Linux/aws_signing_helper
+          chmod +x aws_signing_helper
+
+      - name: Fetch Teleport binaries
+        uses: teleport-actions/setup@v1
+        with:
+          version: 17.5.2
+
+      - name: Authenticate with Teleport
+        run: |
+          tbot start --oneshot -c ./action_support/bot.yaml
+          mkdir -p /home/runner/.aws
+          cp ./action_support/aws_config /home/runner/.aws/config
+
+      - name: Cleanup old images
+        run: |
+          DAYS_TO_KEEP=${{ github.event.inputs.days_to_keep || '30' }}
+          CUTOFF_DATE=$(date -d "$DAYS_TO_KEEP days ago" -Iseconds)
+          
+          echo "🗑️ Cleaning up images older than $DAYS_TO_KEEP days (before $CUTOFF_DATE)"
+          
+          # List all images and filter by date
+          aws ecr describe-images \
+            --region $AWS_REGION \
+            --repository-name $ECR_REPOSITORY \
+            --query "imageDetails[?imageTagStatus=='TAGGED' && imagePushedAt<'$CUTOFF_DATE'].{imageDigest:imageDigest,imageTags:imageTags,imagePushedAt:imagePushedAt}" \
+            --output table
+          
+          # Get image digests to delete (excluding 'latest' and 'main' tags)
+          IMAGES_TO_DELETE=$(aws ecr describe-images \
+            --region $AWS_REGION \
+            --repository-name $ECR_REPOSITORY \
+            --query "imageDetails[?imageTagStatus=='TAGGED' && imagePushedAt<'$CUTOFF_DATE' && !contains(imageTags[0], 'latest') && !contains(imageTags[0], 'main')].imageDigest" \
+            --output text)
+          
+          if [ ! -z "$IMAGES_TO_DELETE" ]; then
+            echo "🗑️ Deleting old images..."
+            for digest in $IMAGES_TO_DELETE; do
+              echo "Deleting image with digest: $digest"
+              aws ecr batch-delete-image \
+                --region $AWS_REGION \
+                --repository-name $ECR_REPOSITORY \
+                --image-ids imageDigest=$digest
+            done
+            echo "✅ Cleanup completed"
+          else
+            echo "ℹ️ No images found for cleanup"
+          fi
+
+      - name: Report cleanup results
+        run: |
+          REMAINING_IMAGES=$(aws ecr describe-images \
+            --region $AWS_REGION \
+            --repository-name $ECR_REPOSITORY \
+            --query 'length(imageDetails)')
+          
+          echo "📊 Cleanup Summary:"
+          echo "Remaining images in repository: $REMAINING_IMAGES"
+          
+          # Show recent images
+          echo "📋 Recent images:"
+          aws ecr describe-images \
+            --region $AWS_REGION \
+            --repository-name $ECR_REPOSITORY \
+            --query "sort_by(imageDetails[?imageTagStatus=='TAGGED'], &imagePushedAt)[-10:].{Tags:imageTags[0],PushedAt:imagePushedAt}" \
+            --output table

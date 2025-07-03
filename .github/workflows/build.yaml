@@ -1,0 +1,75 @@
+name: Build Docker Images
+
+on:
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'web/**'
+      - 'backend/**'
+      - '.github/workflows/build.yaml'
+  push:
+    branches: [ develop, 'feature/**' ]
+    paths:
+      - 'web/**'
+      - 'backend/**'
+
+env:
+  ECR_REGISTRY: 668558765449.dkr.ecr.us-west-2.amazonaws.com
+  ECR_REPOSITORY: mwi-demo-10bbb2a
+  AWS_REGION: us-west-2
+
+jobs:
+  build-test:
+    name: Build and Test Images
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+      pull-requests: write
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          platforms: linux/amd64,linux/arm64
+
+      - name: Generate image metadata
+        id: meta
+        run: |
+          TAG=${GITHUB_SHA::8}
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            TAG="pr-${{ github.event.number }}-${TAG}"
+          fi
+          echo "tag=${TAG}" >> $GITHUB_OUTPUT
+          echo "Generated tag: ${TAG}"
+
+      - name: Build backend image (multi-arch)
+        uses: docker/build-push-action@v5
+        with:
+          context: ./backend
+          platforms: linux/amd64,linux/arm64
+          push: false
+          tags: workload-backend:${{ steps.meta.outputs.tag }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build web image (multi-arch)
+        uses: docker/build-push-action@v5
+        with:
+          context: ./web
+          platforms: linux/amd64,linux/arm64
+          push: false
+          tags: workload-web:${{ steps.meta.outputs.tag }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build summary
+        run: |
+          echo "✅ Backend image built successfully for linux/amd64, linux/arm64"
+          echo "✅ Web image built successfully for linux/amd64, linux/arm64"

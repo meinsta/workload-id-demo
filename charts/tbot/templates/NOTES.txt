@@ -1,0 +1,12 @@
+---
+# templates/NOTES.txt
+1. Get the application URL by running these commands:
+   kubectl get pods -n {{ .Values.global.namespace }} -l app={{ .Values.daemonset.labels.app }}
+
+2. Check the logs:
+   kubectl logs -n {{ .Values.global.namespace }} -l app={{ .Values.daemonset.labels.app }}
+
+3. The tbot DaemonSet has been deployed successfully!
+   - Service Account: {{ .Values.serviceAccount.name }}
+   - Namespace: {{ .Values.global.namespace }}
+   - Image: {{ .Values.tbot.image.repository }}:{{ .Values.tbot.image.tag }}

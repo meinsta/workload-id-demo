@@ -1,0 +1,69 @@
+---
+# Global configuration
+global:
+  namespace: tbot
+
+# Service Account configuration
+serviceAccount:
+  create: true
+  name: tbot
+
+# RBAC configuration
+rbac:
+  create: true
+  clusterRole:
+    name: tbot
+    rules:
+      - apiGroups: [""]
+        resources: ["pods", "nodes", "nodes/proxy"]
+        verbs: ["get"]
+
+# tbot configuration
+tbot:
+  image:
+    repository: public.ecr.aws/gravitational/tbot-distroless
+    tag: "17.5.2"
+    pullPolicy: Always
+  
+  # tbot configuration
+  config:
+    version: "v2"
+    onboarding:
+      join_method: "kubernetes"
+      token: "w2w-demo-backend-bot"
+    storage:
+      type: "memory"
+    proxy_server: "mwidemo.cloud.gravitational.io:443"
+    services:
+      - type: "workload-identity-api"
+        listen: "unix:///run/tbot/sockets/workload.sock"
+        attestors:
+          kubernetes:
+            enabled: true
+        selector:
+          labels:
+            env: ["w2w-demo"]
+
+  # Security context
+  securityContext:
+    runAsUser: 0
+    runAsGroup: 0
+    privileged: true
+
+  # Host configuration
+  hostPid: true
+
+  # Volume configuration
+  volumes:
+    socketsPath: "/run/tbot/sockets"
+    socketsType: "DirectoryOrCreate"
+
+  # Service account token configuration
+  serviceAccountToken:
+    expirationSeconds: 600
+    audience: "mwidemo.cloud.gravitational.io"
+
+# DaemonSet configuration
+daemonset:
+  labels:
+    app: tbot

@@ -1,0 +1,7 @@
+---
+apiVersion: v2
+name: workload-app
+description: A Helm chart for workload applications with service accounts and deployments
+type: application
+version: 0.1.0
+appVersion: "0.1.0"

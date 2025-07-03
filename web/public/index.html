@@ -38,11 +38,11 @@
                   <v-card-title>Ghostunnel Proxy</v-card-title>
                   <v-card-text>
                     <p><b>Technology:</b> Ghostunnel Proxy</p>
-                    <p><b>Workload's SPIFFE ID:</b>spiffe://teleport-17-ent.asteroid.earth/workload-id-demo/demo-web</p>
+                    <p><b>Workload's SPIFFE ID:</b>spiffe://mwidemo.cloud.gravitational.io/apps/w2w-demo/web</p>
                     <p><b>Authorized SPIFFE IDs:</b></p>
                     <ul>
-                      <li>spiffe://teleport-17-ent.asteroid.earth/workload-id-demo/demo-backend-1</li>
-                      <li>spiffe://teleport-federation-demo.asteroid.earth/workload-id-demo/demo-backend-2</li>
+                      <li>spiffe://mwidemo.cloud.gravitational.io/apps/w2w-demo/backend-1</li>
+                      <li>spiffe://mwidemo.cloud.gravitational.io/apps/w2w-demo/backend-2</li>
                     </ul>
                   </v-card-text>
                 </v-card>
@@ -58,12 +58,12 @@
                     It issues SVIDs based on its role. It runs on the VM with the app/proxy.</p>
                     <p><b>SVIDs allowed by role:</b></p>
                     <ul>
-                      <li>spiffe://teleport-17-ent.asteroid.earth/workload-id-demo/demo-web</li>
+                      <li>spiffe://mwidemo.cloud.gravitational.io/apps/w2w-demo/web</li>
                     </ul>
                     <p><b>Authorized UID/GID:</b></p>
                     <ul>
-                      <li>UID: 3002</li>
-                      <li>GID: 3002</li>
+                      <li>UID: 3001</li>
+                      <li>GID: 3001</li>
                     </ul>
                   </v-card-text>
                 </v-card>
@@ -95,7 +95,7 @@
                         <p><b>Workload's SPIFFE ID:</b> {{ backend1.svid }}</p>
                         <p><b>Authorized SPIFFE IDs:</b></p>
                         <ul>
-                          <li>spiffe://teleport-17-ent.asteroid.earth/workload-id-demo/demo-web</li>
+                          <li>spiffe://mwidemo.cloud.gravitational.io/apps/w2w-demo/web</li>
                         </ul>
                         <br v-if="backend1.err"></br>
                         <p v-if="backend1.err">Error: {{ backend1.err }}</p>
@@ -120,10 +120,10 @@
                           <ul>
                             <li>{{ backend1.svid }}</li>
                           </ul>
-                          <p><b>Authorized UID/GID:</b></p>
+                          <p><b>Authorized Pod Metadata:</b></p>
                           <ul>
-                            <li>UID: 3000</li>
-                            <li>GID: 3000</li>
+                            <li><b>Namespace:</b>w2w-demo</li>
+                            <li><b>Service Account:</b>backend-2</li>
                           </ul>
                         </v-card-text>
                       </v-card>
@@ -134,7 +134,7 @@
             </v-col>
             <v-col sm="6">
               <div class="border-md pa-4 mt-4">
-                <h1>K8s</h1>
+                <h1>kubernetes</h1>
                 <v-row>
                   <v-col sm="12">
                     <v-card color="green">
@@ -142,10 +142,10 @@
                       <v-card-text>
                         <p><b>Technology:</b> Go</p>
                         <p><b>SPIFFE Integration:</b> go-spiffe library</p>
-                        <p><b>Workload's SPIFFE ID:</b> spiffe://teleport-federation-demo.asteroid.earth/workload-id-demo/demo-backend-2</p>
+                        <p><b>Workload's SPIFFE ID:</b> spiffe://mwidemo.cloud.gravitational.io/apps/w2w-demo/backend-2</p>
                         <p><b>Authorized SPIFFE IDs:</b></p>
                         <ul>
-                          <li>spiffe://teleport-17-ent.asteroid.earth/workload-id-demo/demo-web</li>
+                          <li>spiffe://mwidemo.cloud.gravitational.io/apps/w2w-demo/web</li>
                         </ul>
                       </v-card-text>
                     </v-card>
@@ -166,12 +166,12 @@
                           It issues SVIDs based on its role. It runs as a daemonset on the nodes.</p>
                           <p><b>SVIDs allowed by role:</b></p>
                           <ul>
-                            <li>spiffe://teleport-federation-demo.asteroid.earth/workload-id-demo/demo-backend-2</li>
+                            <li>spiffe://mwidemo.cloud.gravitational.io/apps/w2w-demo/backend-2</li>
                           </ul>
                           <p><b>Authorized Pod Metadata:</b></p>
                           <ul>
-                            <li><b>Namespace:</b> workload-id-demo</li>
-                            <li><b>Service Account:</b> demo-backend-2</li>
+                            <li><b>Namespace:</b>w2w-demo</li>
+                            <li><b>Service Account:</b>backend-2</li>
                           </ul>
                         </v-card-text>
                       </v-card>

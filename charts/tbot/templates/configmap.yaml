@@ -1,0 +1,9 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Values.serviceAccount.name }}
+  namespace: {{ .Values.global.namespace }}
+data:
+  tbot.yaml: |
+{{ .Values.tbot.config | toYaml | indent 4 }}
