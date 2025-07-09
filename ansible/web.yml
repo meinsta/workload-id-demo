@@ -132,11 +132,15 @@
         mode: '0600'
 
     - name: Pull Docker image
-      become_user: "{{ app_user }}"
-      environment:
-        AWS_PROFILE: w2w-demo-deployment
       shell:
         cmd: "docker pull {{ web_image_uri }}"
+      docker_image:
+        name: "{{ web_image_uri }}"
+        source: pull
+      become_user: "{{ app_user }}"
+      become: true
+      environment:
+        AWS_PROFILE: w2w-demo-deployment
 
     - name: Create systemd service file for Docker container
       copy:
