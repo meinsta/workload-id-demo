@@ -35,14 +35,16 @@ tbot:
       type: "memory"
     proxy_server: "mwidemo.cloud.gravitational.io:443"
     services:
-      - type: "workload-identity-api"
-        listen: "unix:///run/tbot/sockets/workload.sock"
-        attestors:
-          kubernetes:
-            enabled: true
-        selector:
-          labels:
-            env: ["w2w-demo"]
+    - type: "workload-identity-api"
+      listen: "unix:///run/tbot/sockets/workload.sock"
+      credential_ttl: "10m"
+      renewal_interval: "5m"
+      attestors:
+        kubernetes:
+          enabled: true
+      selector:
+        labels:
+          env: ["w2w-demo"]
 
   # Security context
   securityContext:

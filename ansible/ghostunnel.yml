@@ -48,7 +48,7 @@
         recurse: yes
         owner: ghostunnel
         group: ghostunnel
-        mode: '0700'
+        mode: '0777'
 
     - name: Create config file for tbot
       copy:
@@ -63,6 +63,8 @@
           services:
           - type: workload-identity-api
             listen: unix:///tmp/tbot/workload.sock
+            credential_ttl: "10m"
+            renewal_interval: "5m"
             selector:
               labels:
                 env: [w2w-demo]
