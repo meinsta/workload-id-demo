@@ -9,6 +9,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/spiffe/go-spiffe/v2/logger"
 	"github.com/spiffe/go-spiffe/v2/spiffeid"
 	"github.com/spiffe/go-spiffe/v2/spiffetls/tlsconfig"
 	"github.com/spiffe/go-spiffe/v2/workloadapi"
@@ -42,7 +43,8 @@ func run(ctx context.Context) error {
 	}
 
 	// Create a `workloadapi.X509Source`
-	source, err := workloadapi.NewX509Source(ctx, workloadapi.WithClientOptions(workloadapi.WithAddr(config.SocketPath)))
+	source, err := workloadapi.NewX509Source(ctx,
+		workloadapi.WithClientOptions(workloadapi.WithAddr(config.SocketPath), workloadapi.WithLogger(logger.Std)))
 	if err != nil {
 		return fmt.Errorf("unable to create X509Source: %w", err)
 	}
