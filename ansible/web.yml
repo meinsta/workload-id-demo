@@ -131,18 +131,12 @@
         group: "{{ app_group }}"
         mode: '0600'
 
-    - name: Stop existing container if running
-      docker_container:
-        name: "{{ container_name }}"
-        state: absent
-      ignore_errors: yes
-
     - name: Pull Docker image
       docker_image:
         name: "{{ web_image_uri }}"
         source: pull
-        force_source: yes
       become_user: "{{ app_user }}"
+      debug: true
       environment:
         AWS_PROFILE: w2w-demo-deployment
 
