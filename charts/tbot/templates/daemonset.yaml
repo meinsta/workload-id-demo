@@ -49,6 +49,7 @@ spec:
             - "/config/tbot.yaml"
             - "--log-format"
             - "json"
+            - "--debug"
           volumeMounts:
             - name: config
               mountPath: /config
