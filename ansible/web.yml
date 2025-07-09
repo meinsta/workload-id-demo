@@ -135,8 +135,8 @@
       docker_image:
         name: "{{ web_image_uri }}"
         source: pull
+        debug: true
       become_user: "{{ app_user }}"
-      debug: true
       environment:
         AWS_PROFILE: w2w-demo-deployment
 
