@@ -14,14 +14,14 @@ The demo consists of four core components:
 The Node app and Ghostunnel are deployed to a VM together,
 Backend 1 is deployed to its own VM, and Backend 2 is deployed to Kubernetes.
 
-By using mutually verifying SPIFFE IDs, the two apps communicate via mTLS wit
+By using mutually verifying SPIFFE IDs, the two apps communicate via mTLS with
 guaranteed mutual identity.
 
 ### Accessing the Demo
 
 The [live demo page](https://w2w-demo.mwidemo.cloud.gravitational.io/) is protected via Teleport App Access. You need access to the
 demo Teleport cluster running at https://mwidemo.cloud.gravitational.io.
-If you are a Teleport employee, please reach out to Dave for access.
+If you are a Teleport employee, log in with Okta. If you don't have access, please reach out to Dave.
 
 ## Components
 
@@ -48,7 +48,7 @@ with the backend.
 
 ## Deployment as MWI Demo
 
-The `deploy` action uses many features of Teleport Machine & Workload Identity to keep static, long-lived secrets out of the process.
+The [build_and_deploy](./.github/workflows/deploy.yaml) action uses many features of Teleport Machine & Workload Identity to keep static, long-lived secrets out of the process.
 
 Both the web and backend apps are deployed in containers. These container builds are pushed to an AWS ECR registry, which would normally require an AWS keypair. Here we use MWI's SPIFFE certificate capability and AWS Roles Anywhere to generate a short-lived certificate that can be traded for an AWS Role that allows management of that registry only.
 
@@ -68,4 +68,10 @@ testing directory, run the following commands across them to do local developmen
 
 ## Future Improvements
 
-The main improvement I want to make is showing more attestation methods. Running a backend on a VM using Docker/Podman labels, and using pod labels in Kubernetes rather than just a service account are two specific examples.
+Any and all help accepted implementing improvements! Open an issue if you have an idea for other improvements.
+
+* More attestation methods
+  * Running a backend on a VM using Docker/Podman labels
+  * Using pod labels in Kubernetes rather than just a service account
+* Sigstore signing and attestation to anywhere we are issuing to a container
+* Improve the frontend layout/style/responsiveness
