@@ -25,6 +25,15 @@ If you are a Teleport employee, log in with Okta. If you don't have access, plea
 
 ## Components
 
+### Infrastructure
+
+This app relies on a VM, a Kubernetes cluster, an ECR registry for the containers, and multiple
+Teleport resources like Workload Identities and Join Tokens. All of these are managed in the
+[MWI Demo Infra](https://github.com/asteroid-earth/mwi-demo-infra/tree/main/pulumi/w2w-demo) repository.
+
+This shows an example of separation of concerns with Teleport resources, where a cloud/platform/devops team
+manages the background resources an app team needs to deploy.
+
 ### Backend 1 & 2
 
 The [backend app](./backend/main.go) is fairly simple. It is a go HTTP(S) server
