@@ -1,20 +1,13 @@
 version: v2
-auth_server: teleport-ent-15.asteroid.earth:443
+auth_server: mwidemo.cloud.gravitational.io:443
 storage:
-  type: directory
-  path: /opt/machine-id/demo-web-storage
-outputs:
-- type: spiffe-svid
-  destination:
-    type: directory
-    path: /etc/tbot/spiffe/demo-web
-  svid:
-    path: /workload-id-demo/demo-web
-    sans:
-      ip:
-      - 0.0.0.0
+  type: memory
 services:
-- type: spiffe-workload-api
+- type: workload-identity-api
   listen: unix:///Users/davesudia/.tbot-web/demo-web.sock
-  svids:
-  - path: /workload-id-demo/demo-web
+  credential_ttl: "10m"
+  renewal_interval: "5m"
+  selector:
+    labels:
+      env: [w2w-demo]
+      component: [web]

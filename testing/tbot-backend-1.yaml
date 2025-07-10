@@ -1,20 +1,15 @@
-version: v2
-auth_server: teleport-ent-15.asteroid.earth:443
+version: "v2"
 storage:
-  type: directory
-  path: /opt/machine-id/demo-backend-1-storage
-outputs:
-- type: spiffe-svid
-  destination:
-    type: directory
-    path: /etc/tbot/spiffe/demo-backend-1
-  svid:
-    path: /workload-id-demo/demo-backend-1
-    sans:
-      ip:
-      - 0.0.0.0
+  type: "memory"
+proxy_server: "mwidemo.cloud.gravitational.io:443"
 services:
-- type: spiffe-workload-api
+- type: "workload-identity-api"
   listen: unix:///Users/davesudia/.tbot-backend-1/demo-backend-1.sock
-  svids:
-  - path: /workload-id-demo/demo-backend-1
+  credential_ttl: "10m"
+  renewal_interval: "5m"
+  attestors:
+    kubernetes:
+      enabled: true
+  selector:
+    labels:
+      env: ["w2w-demo"]

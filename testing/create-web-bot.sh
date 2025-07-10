@@ -8,6 +8,6 @@ TOKEN=$(tctl bots add workload-id-demo-web-testing-bot --roles=workload-id-demo-
 sleep 1
 WORKLOAD_IDENTITY_EXPERIMENT=1 tbot start \
    --token="$TOKEN" \
-   --auth-server=teleport-ent-15.asteroid.earth:443 \
+   --auth-server=mwidemo.cloud.gravitational.io:443 \
    --join-method=token \
    --config ./tbot-web.yaml
