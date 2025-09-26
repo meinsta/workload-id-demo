@@ -3,6 +3,30 @@ Demo infrastructure and applications of Teleport Workload ID
 
 ![Image of the demo architecture](./overview.png)
 
+## AFTER State (Teleport, No API Keys)
+
+This repository demonstrates the **AFTER** state where API keys have been eliminated using Teleport Workload Identity. See [docs/AFTER_TELEPORT.md](./docs/AFTER_TELEPORT.md) for comprehensive documentation.
+
+### Key Change: No More Authorization Headers
+
+```diff
+// BEFORE: API keys in headers (legacy pattern)
+- const response = await fetch(url, {
+-   headers: {
+-     'Authorization': 'Bearer sk-1234567890abcdef...'
+-   }
+- });
+
+// AFTER: mTLS authentication via Teleport Workload ID
++ const response = await fetch(url);
++ // Authentication handled by ghostunnel + short-lived SVID certificates
++ // Identity proven cryptographically, not via shared secrets
+```
+
+**Benefits**: Automatic rotation, comprehensive audit, no shared secrets, cryptographically-bound identity.
+
+**Quick Start**: `./testing/demo-after.sh` - runs the complete demo locally.
+
 ## Overview
 
 The demo consists of four core components:

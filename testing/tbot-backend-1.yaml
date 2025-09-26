@@ -1,10 +1,12 @@
 version: "v2"
 storage:
   type: "memory"
-proxy_server: "mwidemo.cloud.gravitational.io:443"
+# Cluster endpoint - override with TELEPORT_PROXY_ADDR env var
+proxy_server: "${TELEPORT_PROXY_ADDR:-mwidemo.cloud.gravitational.io:443}"
 services:
 - type: "workload-identity-api"
-  listen: unix:///Users/davesudia/.tbot-backend-1/demo-backend-1.sock
+  # Repo-local socket path - override with BACKEND_WORKLOAD_SOCKET env var
+  listen: "${BACKEND_WORKLOAD_SOCKET:-unix://testing/.cache/sockets/backend.sock}"
   credential_ttl: "10m"
   renewal_interval: "5m"
   attestors:

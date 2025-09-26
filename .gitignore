@@ -6,3 +6,6 @@ errored.tfstate
 node_modules/
 main
 .DS_Store
+
+# Testing cache and sockets
+testing/.cache/
