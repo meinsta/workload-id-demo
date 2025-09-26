@@ -1,0 +1,101 @@
+# Docker Compose for AFTER Demo - Teleport Workload Identity (No API Keys)
+# This demonstrates a complete working system where API keys are eliminated
+# and replaced with short-lived, cryptographically-bound certificates.
+
+version: '3.8'
+
+services:
+  # Backend service - receives requests via mTLS (no API keys)
+  backend:
+    build: 
+      context: ./backend
+      dockerfile: Dockerfile
+    environment:
+      - WORKLOAD_API_SOCKET=unix:///shared/backend.sock
+      - BACKEND_APPROVED_CLIENT_SPIFFEID=spiffe://example.com/web
+      - BACKEND_NAME=Backend (Containerized AFTER Demo)
+      - BACKEND_INFRA=Docker
+      - BACKEND_PORT=8443
+    volumes:
+      - sockets:/shared
+    ports:
+      - "8443:8443"
+    depends_on:
+      tbot-backend:
+        condition: service_started
+    networks:
+      - workload-id-demo
+    restart: unless-stopped
+
+  # Web service - makes requests without Authorization headers (mTLS via ghostunnel)
+  web:
+    build:
+      context: ./web
+      dockerfile: Dockerfile
+    environment:
+      - WEB_PORT=8080
+      - WEB_GHOSTUNNEL_ONE_PORT=8081
+      - WEB_GHOSTUNNEL_TWO_PORT=8082
+    ports:
+      - "8080:8080"
+    depends_on:
+      ghostunnel:
+        condition: service_started
+    networks:
+      - workload-id-demo
+    restart: unless-stopped
+
+  # Ghostunnel proxy
+  ghostunnel:
+    image: ghostunnel/ghostunnel:latest
+    command: >
+      client
+      --use-workload-api-addr unix://shared/web.sock
+      --listen 0.0.0.0:8081
+      --target backend:8443
+      --verify-uri spiffe://example.com/backend
+    volumes:
+      - sockets:/shared
+    ports:
+      - "8081:8081"
+    depends_on:
+      - tbot-web
+    networks:
+      - workload-id-demo
+
+  # tbot for backend
+  tbot-backend:
+    image: public.ecr.aws/gravitational/teleport:15
+    command: >
+      tbot start
+      --config=/etc/tbot/tbot-backend.yaml
+    environment:
+      - TELEPORT_PROXY_ADDR=${TELEPORT_PROXY_ADDR:-demo.teleport.sh:443}
+      - BACKEND_WORKLOAD_SOCKET=unix://shared/backend.sock
+    volumes:
+      - ./testing/tbot-backend-1.yaml:/etc/tbot/tbot-backend.yaml:ro
+      - sockets:/shared
+    networks:
+      - workload-id-demo
+
+  # tbot for web  
+  tbot-web:
+    image: public.ecr.aws/gravitational/teleport:15
+    command: >
+      tbot start
+      --config=/etc/tbot/tbot-web.yaml
+    environment:
+      - TELEPORT_PROXY_ADDR=${TELEPORT_PROXY_ADDR:-demo.teleport.sh:443}
+      - WEB_WORKLOAD_SOCKET=unix://shared/web.sock
+    volumes:
+      - ./testing/tbot-web.yaml:/etc/tbot/tbot-web.yaml:ro
+      - sockets:/shared
+    networks:
+      - workload-id-demo
+
+volumes:
+  sockets:
+
+networks:
+  workload-id-demo:
+    driver: bridge

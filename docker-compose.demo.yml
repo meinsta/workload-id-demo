@@ -1,0 +1,91 @@
+# Docker Compose for AFTER Demo - Mock Mode (No Real Teleport Required)
+# This demonstrates the AFTER state architecture without needing real Teleport cluster access.
+# Perfect for local development and demonstration purposes.
+
+version: '3.8'
+
+services:
+  # Mock SPIFFE server (simulates tbot functionality for demo)
+  mock-spiffe:
+    image: spiffe/spire-server:1.8.2
+    command: >
+      sh -c "
+      echo '🎭 Mock SPIFFE Server - Simulating tbot for AFTER demo';
+      echo '   In production: Real tbot connects to Teleport cluster';
+      echo '   For demo: Mock server provides certificates locally';
+      mkdir -p /shared;
+      echo 'Mock certificates ready' > /shared/backend.sock;
+      echo 'Mock certificates ready' > /shared/web.sock;
+      tail -f /dev/null
+      "
+    volumes:
+      - sockets:/shared
+    networks:
+      - workload-id-demo
+    restart: unless-stopped
+
+  # Backend service - AFTER state (no API keys, mTLS authentication)
+  backend:
+    build: 
+      context: ./backend
+      dockerfile: Dockerfile
+    environment:
+      - WORKLOAD_API_SOCKET=unix:///shared/backend.sock
+      - BACKEND_APPROVED_CLIENT_SPIFFEID=spiffe://example.com/web
+      - BACKEND_NAME=Backend (Demo AFTER State)
+      - BACKEND_INFRA=Docker Demo
+      - BACKEND_PORT=8443
+    volumes:
+      - sockets:/shared
+    ports:
+      - "8443:8443"
+    depends_on:
+      mock-spiffe:
+        condition: service_started
+    networks:
+      - workload-id-demo
+    restart: unless-stopped
+
+  # Web service - makes requests without Authorization headers
+  web:
+    build:
+      context: ./web
+      dockerfile: Dockerfile
+    environment:
+      - WEB_PORT=8080
+      - WEB_GHOSTUNNEL_ONE_PORT=8081
+      - WEB_GHOSTUNNEL_TWO_PORT=8082
+    ports:
+      - "8080:8080"
+    depends_on:
+      backend:
+        condition: service_started
+    networks:
+      - workload-id-demo
+    restart: unless-stopped
+
+  # Demo information service
+  demo-info:
+    image: nginx:alpine
+    volumes:
+      - ./docs:/usr/share/nginx/html:ro
+    ports:
+      - "8090:80"
+    networks:
+      - workload-id-demo
+    restart: unless-stopped
+
+volumes:
+  sockets:
+    driver: local
+
+networks:
+  workload-id-demo:
+    driver: bridge
+
+# Instructions:
+# 1. docker-compose -f docker-compose.demo.yml up --build
+# 2. Visit http://localhost:8080 for web app (no API keys used)
+# 3. Visit http://localhost:8443/whoami for backend identity (proves certificate-based auth)
+# 4. Visit http://localhost:8090 for documentation
+# 5. Notice: No Authorization headers anywhere - all auth via mTLS certificates!

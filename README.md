@@ -25,7 +25,9 @@ This repository demonstrates the **AFTER** state where API keys have been elimin
 
 **Benefits**: Automatic rotation, comprehensive audit, no shared secrets, cryptographically-bound identity.
 
-**Quick Start**: `./testing/demo-after.sh` - runs the complete demo locally.
+**Quick Start**: 
+- **🐳 Containerized Demo**: `make demo` - runs complete demo in Docker (no dependencies needed)
+- **🛠️ Local Demo**: `./testing/demo-after.sh` - runs on local system (requires Go, tbot, ghostunnel)
 
 ## Overview
 
