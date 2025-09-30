@@ -1,0 +1,128 @@
+# Docker Compose for Direct SPIFFE Demo (NO Ghostunnel!)
+# This demonstrates true SPIFFE-to-SPIFFE communication without proxy layers.
+# Both web and backend services use SPIFFE libraries directly.
+
+version: '3.8'
+
+services:
+  # Backend service - SPIFFE mTLS server (no API keys)
+  backend:
+    build: 
+      context: ./backend
+      dockerfile: Dockerfile
+    environment:
+      - WORKLOAD_API_SOCKET=unix:///shared/backend.sock
+      - BACKEND_APPROVED_CLIENT_SPIFFEID=spiffe://example.com/web
+      - BACKEND_NAME=Backend (Direct SPIFFE)
+      - BACKEND_INFRA=Docker Direct mTLS
+      - BACKEND_PORT=8443
+    volumes:
+      - sockets:/shared
+    ports:
+      - "8443:8443"
+    depends_on:
+      tbot-backend:
+        condition: service_started
+    networks:
+      - workload-id-demo
+    restart: unless-stopped
+
+  # Web service - Direct SPIFFE mTLS client (NO GHOSTUNNEL!)
+  web-go:
+    build:
+      context: ./web-go
+      dockerfile: Dockerfile
+    environment:
+      - WEB_WORKLOAD_SOCKET=unix:///shared/web.sock
+      - WEB_PORT=8080
+      - BACKEND_URL=https://backend:8443
+      - BACKEND_SPIFFE_ID=spiffe://example.com/backend
+    volumes:
+      - sockets:/shared
+    ports:
+      - "8080:8080"
+    depends_on:
+      tbot-web:
+        condition: service_started
+      backend:
+        condition: service_started
+    networks:
+      - workload-id-demo
+    restart: unless-stopped
+
+  # tbot for backend - provides SPIFFE certificates
+  tbot-backend:
+    image: public.ecr.aws/gravitational/teleport:15
+    command: >
+      tbot start
+      --config=/etc/tbot/tbot-backend.yaml
+    environment:
+      - TELEPORT_PROXY_ADDR=${TELEPORT_PROXY_ADDR:-demo.teleport.sh:443}
+      - BACKEND_WORKLOAD_SOCKET=unix:///shared/backend.sock
+    volumes:
+      - ./testing/tbot-backend-1.yaml:/etc/tbot/tbot-backend.yaml:ro
+      - sockets:/shared
+    networks:
+      - workload-id-demo
+    restart: unless-stopped
+
+  # tbot for web - provides SPIFFE certificates
+  tbot-web:
+    image: public.ecr.aws/gravitational/teleport:15
+    command: >
+      tbot start
+      --config=/etc/tbot/tbot-web.yaml
+    environment:
+      - TELEPORT_PROXY_ADDR=${TELEPORT_PROXY_ADDR:-demo.teleport.sh:443}
+      - WEB_WORKLOAD_SOCKET=unix:///shared/web.sock
+    volumes:
+      - ./testing/tbot-web.yaml:/etc/tbot/tbot-web.yaml:ro
+      - sockets:/shared
+    networks:
+      - workload-id-demo
+    restart: unless-stopped
+
+  # Demo information service
+  demo-info:
+    image: nginx:alpine
+    volumes:
+      - ./docs:/usr/share/nginx/html:ro
+    ports:
+      - "8090:80"
+    networks:
+      - workload-id-demo
+    restart: unless-stopped
+
+volumes:
+  sockets:
+    driver: local
+
+networks:
+  workload-id-demo:
+    driver: bridge
+
+# 🎯 KEY BENEFITS OF THIS APPROACH:
+#
+# ✅ ELIMINATED COMPONENTS:
+# • No Ghostunnel proxy layer
+# • No HTTP-to-HTTPS translation
+# • No separate mTLS proxy process
+# • Fewer containers and complexity
+#
+# ✅ DIRECT SPIFFE BENEFITS:
+# • Web service has its own SPIFFE identity
+# • True end-to-end mTLS (web SVID → backend SVID)
+# • Both services use same SPIFFE libraries
+# • Certificate rotation handled by both services
+# • Symmetric architecture (both are SPIFFE-enabled)
+#
+# 🚀 USAGE:
+# docker-compose -f docker-compose.direct.yml up --build
+#
+# 📊 ENDPOINTS:
+# • http://localhost:8080 - Direct SPIFFE web service
+# • https://localhost:8443/whoami - Backend SPIFFE identity
+# • http://localhost:8080/status - Both web and backend cert status
+# • http://localhost:8090 - Documentation
+#
+# 🔑 NO API KEYS ANYWHERE - Pure cryptographic identity!

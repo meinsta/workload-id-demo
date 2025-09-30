@@ -1,0 +1,69 @@
+version: v2
+# Real Teleport cluster configuration for web service
+# This connects to your actual Teleport tenant (not mock)
+
+# Your real Teleport cluster proxy address  
+proxy_server: ${TELEPORT_PROXY_ADDR}
+
+# Store data in memory for containers (ephemeral demo)
+storage:
+  type: memory
+
+# Join method - configure based on your Teleport setup
+onboarding:
+  # Option 1: Join token (for demo/development)
+  join_method: token
+  token: ${WEB_JOIN_TOKEN}
+  
+  # Option 2: IAM join (for production AWS)
+  # join_method: iam
+  # iam:
+  #   rule: demo-web-rule
+  
+  # Option 3: GitHub Actions join (for CI/CD)
+  # join_method: github
+  # github:
+  #   enterprise: your-org
+  #   repository: your-repo
+  #   ref: main
+
+services:
+- type: workload-identity-api
+  # Socket path inside container
+  listen: ${WEB_WORKLOAD_SOCKET:-unix:///shared/web.sock}
+  
+  # Certificate TTL and renewal (short-lived for security)
+  credential_ttl: 10m
+  renewal_interval: 5m
+  
+  # Workload identity selector - matches your Teleport workload identity labels
+  selector:
+    labels:
+      # 🔗 Update these to match your Teleport workload identity configuration
+      app: [demo-web]
+      env: [after-demo]
+      component: [web]
+      
+  # Optional: Enable attestation for production security
+  attestors:
+    # Kubernetes pod attestation (if running in k8s)
+    kubernetes:
+      enabled: true
+    # Docker container attestation (if needed)
+    # docker:
+    #   enabled: true
+
+# Optional: Certificate authority
+certificate_authorities:
+- type: host
+  # Optional: Custom CA configuration if needed
+
+# Logging configuration
+log:
+  output: stderr
+  format: text
+  level: ${TBOT_LOG_LEVEL:-info}
+
+# Optional: Metrics and health endpoints
+# debug:
+#   address: 0.0.0.0:3000

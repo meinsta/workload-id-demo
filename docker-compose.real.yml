@@ -1,0 +1,165 @@
+# Docker Compose for REAL Teleport Tenant - Full Production AFTER Demo
+# This connects to your actual Teleport cluster and demonstrates real workload identity.
+# Requires: Valid Teleport cluster, join tokens, and proper Machine ID configuration.
+
+version: '3.8'
+
+services:
+  # Real tbot for backend - connects to your Teleport cluster
+  tbot-backend:
+    image: public.ecr.aws/gravitational/teleport:15
+    command: >
+      tbot start
+      --config=/etc/tbot/tbot-backend.yaml
+      --debug
+    environment:
+      # 🔗 Replace with your actual Teleport cluster
+      - TELEPORT_PROXY_ADDR=${TELEPORT_PROXY_ADDR}
+      - BACKEND_WORKLOAD_SOCKET=unix:///shared/backend.sock
+      # Optional: Teleport data directory for persistence
+      - TELEPORT_DATA_DIR=/var/lib/teleport
+    volumes:
+      - ./testing/tbot-backend-1.yaml:/etc/tbot/tbot-backend.yaml:ro
+      - sockets:/shared
+      - teleport-data-backend:/var/lib/teleport
+    networks:
+      - workload-id-demo
+    restart: unless-stopped
+    # Add capabilities needed for tbot to work properly
+    cap_add:
+      - SYS_ADMIN
+    security_opt:
+      - seccomp:unconfined
+
+  # Real tbot for web - connects to your Teleport cluster
+  tbot-web:
+    image: public.ecr.aws/gravitational/teleport:15
+    command: >
+      tbot start
+      --config=/etc/tbot/tbot-web.yaml
+      --debug
+    environment:
+      # 🔗 Replace with your actual Teleport cluster
+      - TELEPORT_PROXY_ADDR=${TELEPORT_PROXY_ADDR}
+      - WEB_WORKLOAD_SOCKET=unix:///shared/web.sock
+      # Optional: Teleport data directory for persistence
+      - TELEPORT_DATA_DIR=/var/lib/teleport
+    volumes:
+      - ./testing/tbot-web.yaml:/etc/tbot/tbot-web.yaml:ro
+      - sockets:/shared
+      - teleport-data-web:/var/lib/teleport
+    networks:
+      - workload-id-demo
+    restart: unless-stopped
+    # Add capabilities needed for tbot to work properly
+    cap_add:
+      - SYS_ADMIN
+    security_opt:
+      - seccomp:unconfined
+
+  # Ghostunnel proxy with real SVID validation
+  ghostunnel:
+    image: ghostunnel/ghostunnel:latest
+    command: >
+      client
+      --use-workload-api-addr unix:///shared/web.sock
+      --listen 0.0.0.0:8081
+      --target backend:8443
+      --verify-uri ${BACKEND_SPIFFE_ID}
+      --unsafe-target
+    volumes:
+      - sockets:/shared
+    ports:
+      - "8081:8081"
+    depends_on:
+      tbot-web:
+        condition: service_started
+    networks:
+      - workload-id-demo
+    restart: unless-stopped
+
+  # Backend service - REAL Teleport Workload Identity (no API keys)
+  backend:
+    build: 
+      context: ./backend
+      dockerfile: Dockerfile
+    environment:
+      - WORKLOAD_API_SOCKET=unix:///shared/backend.sock
+      - BACKEND_APPROVED_CLIENT_SPIFFEID=${WEB_SPIFFE_ID}
+      - BACKEND_NAME=Backend (Real Teleport Tenant)
+      - BACKEND_INFRA=Docker + Real Teleport
+      - BACKEND_PORT=8443
+    volumes:
+      - sockets:/shared
+    ports:
+      - "8443:8443"
+    depends_on:
+      tbot-backend:
+        condition: service_started
+    networks:
+      - workload-id-demo
+    restart: unless-stopped
+    # Wait for tbot to be ready
+    healthcheck:
+      test: ["CMD", "test", "-S", "/shared/backend.sock"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  # Web service - makes requests without Authorization headers (real mTLS)
+  web:
+    build:
+      context: ./web
+      dockerfile: Dockerfile
+    environment:
+      - WEB_PORT=8080
+      - WEB_GHOSTUNNEL_ONE_PORT=8081
+      - WEB_GHOSTUNNEL_TWO_PORT=8082
+    ports:
+      - "8080:8080"
+    depends_on:
+      ghostunnel:
+        condition: service_started
+    networks:
+      - workload-id-demo
+    restart: unless-stopped
+
+  # Demo information service
+  demo-info:
+    image: nginx:alpine
+    volumes:
+      - ./docs:/usr/share/nginx/html:ro
+    ports:
+      - "8090:80"
+    networks:
+      - workload-id-demo
+    restart: unless-stopped
+
+volumes:
+  sockets:
+    driver: local
+  teleport-data-backend:
+    driver: local
+  teleport-data-web:
+    driver: local
+
+networks:
+  workload-id-demo:
+    driver: bridge
+
+# 🔗 SETUP INSTRUCTIONS FOR YOUR TELEPORT TENANT:
+#
+# 1. Set environment variables:
+#    export TELEPORT_PROXY_ADDR="your-tenant.teleport.sh:443"
+#    export BACKEND_SPIFFE_ID="spiffe://your-tenant.teleport.sh/apps/demo/backend"
+#    export WEB_SPIFFE_ID="spiffe://your-tenant.teleport.sh/apps/demo/web"
+#
+# 2. Create Machine ID join tokens in your Teleport cluster:
+#    tctl tokens add --type=bot --bot-name=demo-backend
+#    tctl tokens add --type=bot --bot-name=demo-web
+#
+# 3. Update tbot config files with your tokens and cluster info
+#
+# 4. Run: docker-compose -f docker-compose.real.yml up --build
+#
+# 5. Watch real certificates being issued by YOUR Teleport cluster!
